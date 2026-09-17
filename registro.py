@@ -25,6 +25,20 @@ def registrar_expediente(expedientes):
 def modificar_expediente(expedientes):
     """Busca por codigo con buscar_posicion(). Si no existe, avisa.
     Si existe, pide datos nuevos, valida en bucle, reemplaza y guarda."""
-    
+    codigo = input("Codigo a modificar: ")
+    pos = buscar_posicion(expedientes, codigo)
+    if pos is None:
+        print("Expediente no encontrado.")
+        return
+    while True:
+        nombre = input("Nombre: ")
+        dni = input("DNI: ")
+        asunto = input("Asunto: ")
+        if validar_datos(nombre, dni, asunto):
+            break
+        print("Datos invalidos, intente de nuevo.")
+    fecha = expedientes[pos]["fecha"]
+    expedientes[pos] = crear_expediente(codigo, nombre, dni, asunto, fecha)
+    guardar_en_archivo(expedientes)
     # TODO (Cristobal) - usa buscar_posicion(expedientes, codigo)
     pass
