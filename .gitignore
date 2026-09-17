@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Datos generados en tiempo de ejecucion
+expedientes.txt
+
+# Entornos y editores
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
