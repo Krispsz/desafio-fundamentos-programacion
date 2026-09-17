@@ -2,6 +2,10 @@ from persistencia import guardar_en_archivo
 
 def buscar_posicion(expedientes, codigo):
     """Retorna el indice del expediente con ese codigo, o None si no existe."""
+    for i in range(len(expedientes)):
+        if expedientes[1].codigo == codigo: 
+            return i
+    return None
     # TODO (Alex) - subir primero, Cristobal depende de esta funcion
     pass
 
