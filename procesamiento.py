@@ -1,11 +1,4 @@
 from persistencia import guardar_en_archivo
-expedientes = [
-    {"codigo": 8212, "nombre": "Juana Pérez"},
-    {"codigo": 6121, "nombre": "Carlos Gómez"},
-    {"codigo": 1131, "nombre": "Ana Torres"},
-    {"codigo": 5313, "nombre": "Luis Mendoza"}
-]
-
 
 def buscar_posicion(expedientes, codigo):
     """Retorna el indice del expediente con ese codigo, o None si no existe."""
@@ -36,7 +29,7 @@ def ordenar_expedientes(expedientes, criterio="codigo"):
             if expedientes[j][criterio] > expedientes[j + 1][criterio]:
                 temporal = expedientes[j]
                 expedientes[j] = expedientes[j + 1]
-                temporal = expedientes[j + 1]
+                expedientes[j + 1] = temporal
     print(expedientes)
     return expedientes
     # TODO (Alex)
@@ -45,15 +38,12 @@ def ordenar_expedientes(expedientes, criterio="codigo"):
 def eliminar_expediente(expedientes):
     """Busca por codigo con buscar_posicion(), lo quita (pop) y guarda."""
     # TODO (Alex)
+    codigo = int(input("Ingrese el codigo del expediente a eliminar: "))
+    posicion = buscar_posicion(expedientes, codigo)
+    if posicion == None:
+        print("Expediente no encontrado")
+    else:
+        expedientes.pop(posicion)
+        print("Expediente eliminado con éxito.")
+        guardar_en_archivo(expedientes)
     pass
-
-print("--- ANTES DE ORDENAR ---")
-for exp in expedientes:
-    print(exp)
-
-# Ejecutamos la función
-ordenar_expedientes(expedientes)
-
-print("\n--- DESPUÉS DE ORDENAR ---")
-for exp in expedientes:
-    print(exp)
