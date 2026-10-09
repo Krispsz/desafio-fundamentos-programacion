@@ -1,8 +1,11 @@
+"""Punto de entrada de la Mesa de Partes Digital: integra todos los modulos."""
+
 from persistencia import cargar_desde_archivo, guardar_en_archivo
 from registro import registrar_expediente, modificar_expediente
 from procesamiento import buscar_expediente, ordenar_expedientes, eliminar_expediente
 
 def mostrar_menu():
+    """Imprime las opciones disponibles del menu principal."""
     print("\n--- Mesa de Partes Digital ---")
     print("1. Registrar expediente")
     print("2. Buscar expediente")
@@ -12,13 +15,17 @@ def mostrar_menu():
     print("6. Salir")
 
 def main():
+    """Carga los expedientes, ejecuta el menu y guarda los cambios al salir."""
     expedientes = cargar_desde_archivo()
+    print("Expedientes cargados: " + str(len(expedientes)))
     salir = False
     while not salir:
         mostrar_menu()
-        opcion = input("Elige una opcion: ")
+        opcion = input("Elige una opcion: ").strip()
         if opcion == "1":
             registrar_expediente(expedientes)
+        elif opcion in ("2", "3", "4", "5") and len(expedientes) == 0:
+            print("No hay expedientes registrados.")
         elif opcion == "2":
             buscar_expediente(expedientes)
         elif opcion == "3":
