@@ -13,8 +13,8 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `expediente.py`    | Estructura del expediente y generacion de codigos correlativos       |
 | `persistencia.py`  | Lectura y escritura del archivo de texto `expedientes.txt`           |
 | `validaciones.py`  | Validacion de los datos ingresados por el usuario                    |
-| `registro.py`      | Flujo de registro y listado de expedientes                           |
-| `procesamiento.py` | Busquedas, filtros y estadisticas sobre los expedientes              |
+| `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
+| `procesamiento.py` | Busqueda por codigo, ordenamiento burbuja y eliminacion              |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
 
 ## Formato de almacenamiento
@@ -35,6 +35,23 @@ Requiere Python 3 (sin dependencias externas):
 python main.py
 ```
 
+Menu principal:
+
+1. Registrar expediente (pide nombre, DNI y asunto; repite hasta que sean validos)
+2. Buscar expediente por codigo (ej. `EXP-0001`)
+3. Modificar expediente
+4. Eliminar expediente
+5. Ordenar expedientes (codigo, nombre, dni, asunto o fecha)
+6. Salir (guarda en `expedientes.txt`)
+
+Reglas de validacion: nombre y asunto no vacios, DNI de exactamente 8 caracteres.
+
 ## Equipo
 
-Trabajo grupal. El desarrollo esta repartido por modulos entre los integrantes.
+| Integrante | Usuario en Git | Modulos                                         |
+|------------|----------------|-------------------------------------------------|
+| Fabrizio   | `Angel`        | `expediente.py`, `persistencia.py`, `main.py`    |
+| Cristobal  | `Crizzz3`      | `validaciones.py`, `registro.py`                 |
+| Alex       | `Alexander`    | `procesamiento.py`                               |
+
+> Nota: los commits de Fabrizio aparecen con el nombre de usuario `Angel`.
