@@ -13,6 +13,14 @@ def crear_expediente(codigo, nombre, dni, asunto, fecha):
 
 
 def generar_codigo(expedientes):
-    """Genera el siguiente codigo correlativo con formato EXP-0001."""
-    numero = len(expedientes) + 1
-    return "EXP-" + str(numero).zfill(4)
+    """Genera el siguiente codigo correlativo con formato EXP-0001.
+
+    Usa el numero mas alto existente + 1 (no la cantidad de expedientes),
+    para no repetir codigos despues de eliminar uno.
+    """
+    mayor = 0
+    for expediente in expedientes:
+        numero = int(expediente["codigo"][4:])
+        if numero > mayor:
+            mayor = numero
+    return "EXP-" + str(mayor + 1).zfill(4)
