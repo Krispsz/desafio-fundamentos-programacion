@@ -1,3 +1,5 @@
+from datetime import date
+
 from expediente import crear_expediente, generar_codigo
 from persistencia import guardar_en_archivo
 from validaciones import validar_datos
@@ -19,8 +21,7 @@ def registrar_expediente(expedientes):
     nuevo = crear_expediente(codigo, nombre, dni, asunto, fecha)
     expedientes.append(nuevo)
     guardar_en_archivo(expedientes)
-    # TODO (Cristobal)
-    pass
+    print("Expediente registrado con codigo " + codigo)
 
 def modificar_expediente(expedientes):
     """Busca por codigo con buscar_posicion(). Si no existe, avisa.
@@ -40,5 +41,4 @@ def modificar_expediente(expedientes):
     fecha = expedientes[pos]["fecha"]
     expedientes[pos] = crear_expediente(codigo, nombre, dni, asunto, fecha)
     guardar_en_archivo(expedientes)
-    # TODO (Cristobal) - usa buscar_posicion(expedientes, codigo)
-    pass
+    print("Expediente modificado.")
