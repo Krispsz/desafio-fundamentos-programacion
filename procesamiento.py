@@ -21,6 +21,31 @@ def buscar_expediente(expedientes):
     else:
         print("Expediente no encontrado")
 
+def buscar_por_texto(expedientes, campo, texto):
+    """Retorna una lista con los expedientes cuyo campo ('nombre' o 'asunto')
+    contiene el texto, sin distinguir mayusculas. Usa lower() y find()."""
+    resultados = []
+    buscado = texto.lower()
+    for i in range(len(expedientes)):
+        if expedientes[i][campo].lower().find(buscado) != -1:
+            resultados.append(expedientes[i])
+    return resultados
+
+def buscar_textual(expedientes):
+    """Pide el campo (nombre/asunto) y el texto; muestra las coincidencias
+    o 'Sin coincidencias' si la lista queda vacia."""
+    campo = input("Buscar en (nombre/asunto): ").strip().lower()
+    texto = input("Texto a buscar: ").strip()
+    if campo not in ("nombre", "asunto") or texto == "":
+        print("Busqueda invalida")
+        return
+    resultados = buscar_por_texto(expedientes, campo, texto)
+    if len(resultados) == 0:
+        print("Sin coincidencias")
+        return
+    for expediente in resultados:
+        mostrar_expediente(expediente)
+
 def ordenar_expedientes(expedientes, criterio="codigo"):
     """Ordena con algoritmo BURBUJA (no usar sorted() ni list.sort())."""
     ingresado = input("Ingrese criterio (codigo/nombre/dni/asunto/fecha) [codigo]: ").strip()
