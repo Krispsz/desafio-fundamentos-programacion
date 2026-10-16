@@ -1,5 +1,7 @@
 from persistencia import guardar_en_archivo
 
+ENCABEZADOS = ["Codigo", "Nombre", "DNI", "Asunto", "Fecha"]
+
 def buscar_posicion(expedientes, codigo):
     """Retorna el indice del expediente con ese codigo, o None si no existe."""
     for i in range(len(expedientes)):
@@ -11,6 +13,53 @@ def mostrar_expediente(expediente):
     """Imprime los datos de un expediente en una linea."""
     print(f'{expediente["codigo"]} | {expediente["nombre"]} | {expediente["dni"]} | '
           f'{expediente["asunto"]} | {expediente["fecha"]}')
+
+def construir_matriz(expedientes):
+    """Retorna una matriz (lista de listas): la fila 0 son los encabezados y cada
+    fila siguiente es [codigo, nombre, dni, asunto, fecha] de un expediente.
+    El asunto se recorta a 25 caracteres con [:22] + '...' si es mas largo."""
+    matriz = [ENCABEZADOS]
+    for expediente in expedientes:
+        asunto = expediente["asunto"]
+        if len(asunto) > 25:
+            asunto = asunto[:22] + "..."
+        fila = [expediente["codigo"], expediente["nombre"], expediente["dni"],
+                asunto, expediente["fecha"]]
+        matriz.append(fila)
+    return matriz
+
+def imprimir_tabla(expedientes):
+    """Construye la matriz, calcula el ancho de cada columna con dos for anidados
+    (fila x columna) y la imprime alineada con ljust y separada por ' | '."""
+    matriz = construir_matriz(expedientes)
+    anchos = []
+    for columna in range(len(ENCABEZADOS)):
+        anchos.append(0)
+    for fila in range(len(matriz)):
+        for columna in range(len(matriz[fila])):
+            if len(matriz[fila][columna]) > anchos[columna]:
+                anchos[columna] = len(matriz[fila][columna])
+    for fila in range(len(matriz)):
+        linea = ""
+        for columna in range(len(matriz[fila])):
+            if columna > 0:
+                linea = linea + " | "
+            linea = linea + matriz[fila][columna].ljust(anchos[columna])
+        print(linea)
+        if fila == 0:
+            separador = ""
+            for columna in range(len(anchos)):
+                if columna > 0:
+                    separador = separador + "-+-"
+                separador = separador + "-" * anchos[columna]
+            print(separador)
+
+def listar_expedientes(expedientes):
+    """Muestra todos los expedientes en tabla, o un aviso si no hay ninguno."""
+    if len(expedientes) == 0:
+        print("No hay expedientes registrados.")
+        return
+    imprimir_tabla(expedientes)
 
 def buscar_expediente(expedientes):
     """Pide un codigo, usa buscar_posicion() y muestra el resultado."""
@@ -32,8 +81,8 @@ def buscar_por_texto(expedientes, campo, texto):
     return resultados
 
 def buscar_textual(expedientes):
-    """Pide el campo (nombre/asunto) y el texto; muestra las coincidencias
-    o 'Sin coincidencias' si la lista queda vacia."""
+    """Pide el campo (nombre/asunto) y el texto; muestra las coincidencias con
+    imprimir_tabla o 'Sin coincidencias' si la lista queda vacia."""
     campo = input("Buscar en (nombre/asunto): ").strip().lower()
     texto = input("Texto a buscar: ").strip()
     if campo not in ("nombre", "asunto") or texto == "":
@@ -43,8 +92,7 @@ def buscar_textual(expedientes):
     if len(resultados) == 0:
         print("Sin coincidencias")
         return
-    for expediente in resultados:
-        mostrar_expediente(expediente)
+    imprimir_tabla(resultados)
 
 def ordenar_expedientes(expedientes, criterio="codigo"):
     """Ordena con algoritmo BURBUJA (no usar sorted() ni list.sort())."""
@@ -61,8 +109,7 @@ def ordenar_expedientes(expedientes, criterio="codigo"):
                 temporal = expedientes[j]
                 expedientes[j] = expedientes[j + 1]
                 expedientes[j + 1] = temporal
-    for expediente in expedientes:
-        mostrar_expediente(expediente)
+    imprimir_tabla(expedientes)
     return expedientes
 
 def eliminar_expediente(expedientes):
