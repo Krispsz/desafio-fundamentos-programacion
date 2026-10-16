@@ -2,7 +2,7 @@ from datetime import date
 
 from expediente import crear_expediente, generar_codigo
 from persistencia import guardar_en_archivo
-from validaciones import validar_datos
+from validaciones import validar_datos, normalizar_texto
 from procesamiento import buscar_posicion
 
 def registrar_expediente(expedientes):
@@ -10,8 +10,11 @@ def registrar_expediente(expedientes):
     crea el expediente, lo agrega y guarda el archivo."""
     while True:
         nombre = input("Nombre: ")
+        nombre = normalizar_texto(nombre).title()
         dni = input("DNI: ")
+        dni = dni.replace(" ", "")
         asunto = input("Asunto: ")
+        asunto = normalizar_texto(asunto)
         if validar_datos(nombre, dni, asunto):
             break
         print("Datos invalidos, intente de nuevo.")
@@ -33,8 +36,11 @@ def modificar_expediente(expedientes):
         return
     while True:
         nombre = input("Nombre: ")
+        nombre = normalizar_texto(nombre).title()
         dni = input("DNI: ")
+        dni = dni.replace(" ", "")
         asunto = input("Asunto: ")
+        asunto = normalizar_texto(asunto)
         if validar_datos(nombre, dni, asunto):
             break
         print("Datos invalidos, intente de nuevo.")
