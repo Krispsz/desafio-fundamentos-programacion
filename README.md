@@ -12,9 +12,9 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 |--------------------|---------------------------------------------------------------------|
 | `expediente.py`    | Estructura del expediente y generacion de codigos correlativos       |
 | `persistencia.py`  | Lectura y escritura del archivo de texto `expedientes.txt`           |
-| `validaciones.py`  | Validacion de los datos ingresados por el usuario                    |
+| `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
 | `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
-| `procesamiento.py` | Busqueda por codigo, ordenamiento burbuja y eliminacion              |
+| `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
 
 ## Formato de almacenamiento
@@ -39,12 +39,33 @@ Menu principal:
 
 1. Registrar expediente (pide nombre, DNI y asunto; repite hasta que sean validos)
 2. Buscar expediente por codigo (ej. `EXP-0001`)
-3. Modificar expediente
-4. Eliminar expediente
-5. Ordenar expedientes (codigo, nombre, dni, asunto o fecha)
-6. Salir (guarda en `expedientes.txt`)
+3. Buscar por texto en nombre o asunto (sin distinguir mayusculas, ej. `licencia`)
+4. Modificar expediente
+5. Eliminar expediente
+6. Ordenar expedientes (codigo, nombre, dni, asunto o fecha) y mostrarlos en tabla
+7. Listar expedientes en tabla
+8. Salir (guarda en `expedientes.txt`)
 
-Reglas de validacion: nombre y asunto no vacios, DNI de exactamente 8 caracteres.
+Las opciones 2 a 7 avisan "No hay expedientes registrados." si la lista esta vacia.
+
+Los listados se muestran como tabla alineada a partir de un **arreglo bidimensional**
+(lista de listas): la fila 0 son los encabezados y cada fila siguiente es un expediente.
+Los asuntos de mas de 25 caracteres se recortan con `...`.
+
+## Normalizacion y validacion de entradas
+
+Antes de validar, cada dato se normaliza con metodos de cadenas:
+
+| Campo  | Normalizacion                                                  | Ejemplo                              |
+|--------|----------------------------------------------------------------|--------------------------------------|
+| Nombre | `strip()`, espacios dobles a uno con `replace()`, y `title()`  | `"  juan   perez "` -> `"Juan Perez"` |
+| DNI    | se quitan los espacios con `replace(" ", "")`                  | `"1234 5678"` -> `"12345678"`         |
+| Asunto | `strip()` y espacios dobles a uno con `replace()`              | `" Reclamo  de  agua"` -> `"Reclamo de agua"` |
+
+Reglas de validacion (se repite la captura hasta que se cumplan):
+
+- Nombre y asunto no vacios y sin el caracter separador `|`.
+- DNI de exactamente 8 digitos numericos.
 
 ## Equipo
 
