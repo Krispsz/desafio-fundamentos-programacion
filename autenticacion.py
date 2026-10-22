@@ -1,12 +1,4 @@
-"""Login de usuarios de la Mesa de Partes Digital.
-
-Formato de usuarios.txt (un usuario por linea, campos separados por |):
-    usuario|hash|rol
-
-El hash es el resumen SHA-256 en hexadecimal de la contrasena en texto plano.
-Ninguna funcion de este modulo imprime ni pide datos: solo retornan valores
-(True/False y el rol). El bucle de intentos y los mensajes viven en main.py.
-"""
+"""Login con usuarios.txt: formato usuario|hash|rol (hash SHA-256). Solo retorna valores."""
 
 import hashlib
 
@@ -16,16 +8,12 @@ SEPARADOR = "|"
 
 
 def hash_contrasena(contrasena):
-    """Retorna el hash SHA-256 en hexadecimal de la contrasena recibida."""
+    """Hash SHA-256 en hexadecimal de la contrasena."""
     return hashlib.sha256(contrasena.encode("utf-8")).hexdigest()
 
 
 def leer_usuarios(ruta=RUTA_USUARIOS):
-    """Lee usuarios.txt con with open y retorna la lista de usuarios.
-
-    Cada usuario es un diccionario con las claves usuario, hash y rol.
-    Si el archivo no existe o una linea esta mal formada, se omite esa linea.
-    """
+    """Lista de usuarios leidos de usuarios.txt; vacia si el archivo no existe."""
     usuarios = []
     try:
         with open(ruta, "r", encoding="utf-8") as archivo:
@@ -48,9 +36,7 @@ def leer_usuarios(ruta=RUTA_USUARIOS):
 
 
 def verificar_login(usuario, contrasena, ruta=RUTA_USUARIOS):
-    """Retorna (True, rol) si usuario y contrasena coinciden con usuarios.txt.
-    Retorna (False, "") si el usuario no existe o la contrasena es incorrecta.
-    El nombre de usuario no distingue mayusculas; la contrasena si."""
+    """(True, rol) si el hash de la clave coincide con usuarios.txt; si no, (False, "")."""
     usuario = usuario.strip().lower()
     for registrado in leer_usuarios(ruta):
         if registrado["usuario"].lower() == usuario:
@@ -61,7 +47,7 @@ def verificar_login(usuario, contrasena, ruta=RUTA_USUARIOS):
 
 
 def usuario_existe(usuario, ruta=RUTA_USUARIOS):
-    """Retorna True si el usuario ya esta registrado en usuarios.txt."""
+    """True si el usuario esta registrado en usuarios.txt."""
     usuario = usuario.strip().lower()
     for registrado in leer_usuarios(ruta):
         if registrado["usuario"].lower() == usuario:
@@ -70,11 +56,7 @@ def usuario_existe(usuario, ruta=RUTA_USUARIOS):
 
 
 def agregar_usuario(usuario, contrasena, rol, ruta=RUTA_USUARIOS):
-    """Agrega un usuario a usuarios.txt guardando el hash de la contrasena.
-
-    Retorna True si se registro; False si los datos son invalidos
-    (vacios o con el separador |) o si el usuario ya existia.
-    """
+    """Agrega a usuarios.txt el hash de la clave; False si es invalido o ya existia."""
     usuario = usuario.strip()
     contrasena = contrasena.strip()
     rol = rol.strip()
