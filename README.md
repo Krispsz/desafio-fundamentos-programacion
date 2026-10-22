@@ -34,12 +34,13 @@ El acceso al sistema se valida con `autenticacion.py`, que lee `usuarios.txt`
 (un usuario por linea, campos separados por `|`):
 
 ```
-usuario|hash|rol
-admin|240be518...|administrador
+usuario|sal|hash|rol
+admin|340787702d2d7f27|7e45cc7c...|administrador
 ```
 
-El `hash` es el resumen **SHA-256** en hexadecimal de la contrasena en texto
-plano (se genera con `hash_contrasena()`; nunca se guarda la clave).
+La `sal` es un valor aleatorio de 16 caracteres hexadecimales generado con
+`secrets.token_hex(8)`; el `hash` es el resumen **SHA-256** de `sal + contrasena`
+(nunca se guarda la clave ni su hash sin sal).
 
 Las funciones del modulo solo retornan valores, sin `print` ni `input`:
 
@@ -48,7 +49,7 @@ Las funciones del modulo solo retornan valores, sin `print` ni `input`:
 | `verificar_login(usuario, clave)`| tupla `(True, rol)` o `(False, "")`         |
 | `usuario_existe(usuario)`        | `True` / `False`                            |
 | `agregar_usuario(usuario, clave, rol)` | `True` si registro, `False` si invalido o ya existia |
-| `hash_contrasena(clave)`         | hash SHA-256 en hexadecimal                |
+| `hash_contrasena(clave, sal)`    | hash SHA-256 en hexadecimal                |
 | `leer_usuarios()`                | lista de diccionarios `usuario`, `hash`, `rol` |
 
 Usuarios de prueba (el nombre no distingue mayusculas, la contrasena si):
