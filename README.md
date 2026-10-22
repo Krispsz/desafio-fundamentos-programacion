@@ -15,6 +15,7 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
 | `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
 | `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
+| `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
 
 ## Formato de almacenamiento
@@ -26,6 +27,36 @@ campos separados por el caracter `|`:
 codigo|nombre|dni|asunto|fecha
 EXP-0001|Juan Perez|12345678|Tramite X|2026-09-17
 ```
+
+## Autenticacion
+
+El acceso al sistema se valida con `autenticacion.py`, que lee `usuarios.txt`
+(un usuario por linea, campos separados por `|`):
+
+```
+usuario|hash|rol
+admin|240be518...|administrador
+```
+
+El `hash` es el resumen **SHA-256** en hexadecimal de la contrasena en texto
+plano (se genera con `hash_contrasena()`; nunca se guarda la clave).
+
+Las funciones del modulo solo retornan valores, sin `print` ni `input`:
+
+| Funcion                          | Retorno                                     |
+|----------------------------------|---------------------------------------------|
+| `verificar_login(usuario, clave)`| tupla `(True, rol)` o `(False, "")`         |
+| `usuario_existe(usuario)`        | `True` / `False`                            |
+| `agregar_usuario(usuario, clave, rol)` | `True` si registro, `False` si invalido o ya existia |
+| `hash_contrasena(clave)`         | hash SHA-256 en hexadecimal                |
+| `leer_usuarios()`                | lista de diccionarios `usuario`, `hash`, `rol` |
+
+Usuarios de prueba (el nombre no distingue mayusculas, la contrasena si):
+
+| Usuario | Contrasena | Rol            |
+|---------|------------|----------------|
+| `admin` | `admin123` | `administrador`|
+| `jmesa` | `mesa2026` | `usuario`      |
 
 ## Ejecucion
 

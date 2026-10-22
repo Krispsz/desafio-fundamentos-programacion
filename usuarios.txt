@@ -1,0 +1,2 @@
+admin|240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9|administrador
+jmesa|d2dae2003517ee0fb662fe45bdb0ddec59ac8d6ebb9253f8ec0e4bdc699ce337|usuario
