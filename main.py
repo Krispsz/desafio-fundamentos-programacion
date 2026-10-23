@@ -1,4 +1,7 @@
-"""Punto de entrada de la Mesa de Partes Digital: integra todos los modulos."""
+"""Punto de entrada de la Mesa de Partes Digital: integra todos los modulos.
+
+Convencion: este archivo es la capa de consola (aqui van los input y print);
+los modulos de logica solo reciben parametros y retornan valores."""
 
 from persistencia import cargar_desde_archivo, guardar_en_archivo
 from registro import registrar_expediente, modificar_expediente
@@ -45,8 +48,10 @@ def main():
             salir = True
         else:
             print("Opcion invalida, intenta de nuevo.")
-    guardar_en_archivo(expedientes)
-    print("Datos guardados. Hasta luego.")
+    if guardar_en_archivo(expedientes):
+        print("Datos guardados. Hasta luego.")
+    else:
+        print("No se pudo guardar en expedientes.txt. Revise el archivo.")
 
 if __name__ == "__main__":
     main()

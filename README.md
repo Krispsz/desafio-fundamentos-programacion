@@ -18,6 +18,27 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
 
+## Convencion de codigo
+
+Se separa la **logica** de la **consola**:
+
+- Las funciones de logica (`expediente.py`, `persistencia.py`, `autenticacion.py`,
+  `validaciones.py`) solo reciben parametros y **retornan valores**: no usan `print` ni `input`.
+- Los `input` y `print` van en la capa de consola (`main.py` y las funciones de menu).
+
+Ejemplo:
+
+```python
+# logica (autenticacion.py): retorna una tupla, no imprime
+valido, rol = verificar_login(usuario, clave)
+
+# consola (main.py): decide que mostrar
+if valido:
+    print("Bienvenido, " + usuario + " (" + rol + ")")
+```
+
+Asi la misma logica se puede reutilizar desde la interfaz grafica y probar con `unittest`.
+
 ## Formato de almacenamiento
 
 Los expedientes se guardan en `expedientes.txt`, un registro por linea, con los
@@ -104,7 +125,6 @@ Reglas de validacion (se repite la captura hasta que se cumplan):
 | Integrante | Usuario en Git | Modulos                                         |
 |------------|----------------|-------------------------------------------------|
 | Fabrizio   | `Angel`        | `expediente.py`, `persistencia.py`, `main.py`    |
-| Cristobal  | `Crizzz3`      | `validaciones.py`, `registro.py`                 |
-| Alex       | `Alexander`    | `procesamiento.py`                               |
+| Cristobal  | `Crizzz3`      | `validaciones.py`, `registro.py`, `procesamiento.py`, `autenticacion.py` |
 
 > Nota: los commits de Fabrizio aparecen con el nombre de usuario `Angel`.
