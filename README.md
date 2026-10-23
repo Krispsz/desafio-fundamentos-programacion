@@ -45,9 +45,18 @@ Los expedientes se guardan en `expedientes.txt`, un registro por linea, con los
 campos separados por el caracter `|`:
 
 ```
-codigo|nombre|dni|asunto|fecha
-EXP-0001|Juan Perez|12345678|Tramite X|2026-09-17
+codigo|nombre|dni|asunto|fecha|estado|dependencia|historial
+EXP-0001|Juan Perez|12345678|Tramite X|2026-10-22|Recibido|Licencias|2026-10-22,Recibido,admin
 ```
+
+- `estado`: uno de `Recibido`, `En proceso`, `Atendido`.
+- `dependencia`: una de `Mesa de Partes`, `Licencias`, `Rentas`, `Obras`, `Secretaria General`.
+- `historial`: entradas `fecha,estado,usuario` separadas por `;`
+  (ej. `2026-10-22,Recibido,admin;2026-10-23,En proceso,jmesa`).
+
+El programa tambien lee el formato anterior de 5 campos (`codigo|nombre|dni|asunto|fecha`):
+esos expedientes quedan como `Recibido`, en `Mesa de Partes`, con historial a nombre de `sistema`,
+y se guardan con 8 campos la proxima vez.
 
 ## Autenticacion
 

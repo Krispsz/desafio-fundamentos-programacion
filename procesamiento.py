@@ -1,6 +1,6 @@
 from persistencia import guardar_en_archivo
 
-ENCABEZADOS = ["Codigo", "Nombre", "DNI", "Asunto", "Fecha"]
+ENCABEZADOS = ["Codigo", "Nombre", "DNI", "Asunto", "Fecha", "Estado", "Dependencia"]
 
 def buscar_posicion(expedientes, codigo):
     """Retorna el indice del expediente con ese codigo, o None si no existe."""
@@ -12,11 +12,12 @@ def buscar_posicion(expedientes, codigo):
 def mostrar_expediente(expediente):
     """Imprime los datos de un expediente en una linea."""
     print(f'{expediente["codigo"]} | {expediente["nombre"]} | {expediente["dni"]} | '
-          f'{expediente["asunto"]} | {expediente["fecha"]}')
+          f'{expediente["asunto"]} | {expediente["fecha"]} | {expediente["estado"]} | '
+          f'{expediente["dependencia"]}')
 
 def construir_matriz(expedientes):
     """Retorna una matriz (lista de listas): la fila 0 son los encabezados y cada
-    fila siguiente es [codigo, nombre, dni, asunto, fecha] de un expediente.
+    fila siguiente es [codigo, nombre, dni, asunto, fecha, estado, dependencia].
     El asunto se recorta a 25 caracteres con [:22] + '...' si es mas largo."""
     matriz = [ENCABEZADOS]
     for expediente in expedientes:
@@ -24,7 +25,8 @@ def construir_matriz(expedientes):
         if len(asunto) > 25:
             asunto = asunto[:22] + "..."
         fila = [expediente["codigo"], expediente["nombre"], expediente["dni"],
-                asunto, expediente["fecha"]]
+                asunto, expediente["fecha"], expediente["estado"],
+                expediente["dependencia"]]
         matriz.append(fila)
     return matriz
 

@@ -29,7 +29,7 @@ def main():
         mostrar_menu()
         opcion = input("Elige una opcion: ").strip()
         if opcion == "1":
-            registrar_expediente(expedientes)
+            registrar_expediente(expedientes, "sistema")
         elif opcion in ("2", "3", "4", "5", "6", "7") and len(expedientes) == 0:
             print("No hay expedientes registrados.")
         elif opcion == "2":
