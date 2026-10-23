@@ -97,6 +97,10 @@ Requiere Python 3 (sin dependencias externas):
 python main.py
 ```
 
+Al iniciar se pide usuario y contrasena (la contrasena no se muestra al escribir).
+Hay **3 intentos**: al tercer error el programa muestra "Acceso bloqueado" y termina.
+El rol `administrador` puede usar todas las opciones; el rol `usuario` no puede eliminar.
+
 Menu principal:
 
 1. Registrar expediente (pide nombre, DNI y asunto; repite hasta que sean validos)
