@@ -17,6 +17,7 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
 | `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
+| `gui.py`           | Interfaz grafica (tkinter): login, ventana principal y registro      |
 
 ## Convencion de codigo
 
@@ -117,6 +118,54 @@ Las opciones 2 a 7 avisan "No hay expedientes registrados." si la lista esta vac
 Los listados se muestran como tabla alineada a partir de un **arreglo bidimensional**
 (lista de listas): la fila 0 son los encabezados y cada fila siguiente es un expediente.
 Los asuntos de mas de 25 caracteres se recortan con `...`.
+
+## Interfaz grafica
+
+Ademas de la consola (`python main.py`, sin cambios), el sistema tiene una interfaz
+grafica hecha con `tkinter` (biblioteca estandar):
+
+```bash
+python gui.py
+```
+
+- **Inicio de sesion:** usuario y contrasena (oculta con `*`), boton "Ingresar" o tecla Enter.
+  Usa `verificar_login()` de `autenticacion.py`. Hay **3 intentos**: se muestran los intentos
+  restantes y al tercer error aparece "Acceso bloqueado" y la ventana se cierra.
+- **Ventana principal:** arriba `Usuario: <usuario> (<rol>)`; a la izquierda los botones
+  Registrar, Listar / Buscar y Salir; a la derecha el marco `area_contenido`, donde se dibuja
+  cada vista. Al abrir carga los expedientes con `cargar_desde_archivo()` y al salir (boton
+  Salir o la X de la ventana) guarda con `guardar_en_archivo()`.
+- **Registrar:** formulario con Nombre, DNI, Asunto y una lista de solo lectura con las
+  dependencias. Usa `preparar_datos()` y `crear_registro()` de `registro.py`, las mismas
+  funciones que la consola.
+
+Igual que en la consola, `gui.py` solo arma los widgets: la logica sigue en los otros modulos.
+
+### Contrato para la tabla de expedientes (tarea 13)
+
+El boton "Listar / Buscar" limpia `area_contenido` y llama a una funcion de `gui_tabla.py`
+con esta firma exacta:
+
+```python
+def mostrar_tabla(contenedor, expedientes, usuario, rol):
+```
+
+| Parametro     | Que es                                                                 |
+|---------------|------------------------------------------------------------------------|
+| `contenedor`  | el `Frame` `area_contenido` (ya vacio): la tabla se dibuja **dentro** de el |
+| `expedientes` | la lista de diccionarios cargada al iniciar (la misma que usa el resto de la GUI) |
+| `usuario`     | nombre del usuario que inicio sesion (ej. `admin`)                     |
+| `rol`         | `administrador` o `usuario`                                            |
+
+Lo que se espera de `mostrar_tabla`:
+
+- Dibujar todo dentro de `contenedor` (no crear otra ventana `Tk`).
+- Modificar la lista `expedientes` **en el lugar** (por ejemplo con `pop`), sin reemplazarla
+  por otra lista, para que la ventana principal guarde los cambios al salir.
+- Despues de eliminar un expediente, llamar a `guardar_en_archivo(expedientes)`.
+- Mostrar o habilitar la opcion de eliminar **solo si `rol == "administrador"`**.
+
+Mientras `gui_tabla.py` no exista, el boton muestra "Tabla de expedientes: en desarrollo (tarea 13)".
 
 ## Normalizacion y validacion de entradas
 
