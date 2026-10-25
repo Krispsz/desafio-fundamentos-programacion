@@ -9,7 +9,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from autenticacion import verificar_login
+from expediente import DEPENDENCIAS
 from persistencia import cargar_desde_archivo, guardar_en_archivo
+from registro import preparar_datos, crear_registro
 
 # La tabla de expedientes (tarea 13) va en gui_tabla.py. Mientras no exista,
 # el boton "Listar / Buscar" muestra un aviso.
@@ -21,6 +23,11 @@ except ImportError:
 MAX_INTENTOS = 3
 
 TITULO = "Mesa de Partes Digital"
+
+REGLAS = ("Revise los datos:\n"
+          "- Nombre y asunto no pueden estar vacios.\n"
+          "- Nombre y asunto no pueden contener el caracter |.\n"
+          "- El DNI debe tener exactamente 8 digitos.")
 
 
 def limpiar(contenedor):
@@ -78,6 +85,58 @@ def crear_ventana_login(ventana, al_ingresar):
     entrada_usuario.focus()
 
 
+def procesar_registro(expedientes, nombre, dni, asunto, dependencia, usuario):
+    """Valida con preparar_datos() y crea el expediente con crear_registro().
+
+    Retorna el codigo del nuevo expediente, o None si los datos no son validos.
+    """
+    datos = preparar_datos(nombre, dni, asunto)
+    if datos is None:
+        return None
+    return crear_registro(expedientes, datos[0], datos[1], datos[2], dependencia, usuario)
+
+
+def mostrar_formulario_registro(contenedor, expedientes, usuario):
+    """Dibuja el formulario de registro dentro de contenedor.
+
+    El boton Registrar usa procesar_registro(): si los datos son invalidos
+    muestra las reglas; si son validos muestra el codigo y limpia el formulario.
+    """
+    ttk.Label(contenedor, text="Registrar expediente", font=("Segoe UI", 12, "bold")).grid(
+        row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+    ttk.Label(contenedor, text="Nombre:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+    entrada_nombre = ttk.Entry(contenedor, width=40)
+    entrada_nombre.grid(row=1, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="DNI:").grid(row=2, column=0, sticky="e", padx=5, pady=5)
+    entrada_dni = ttk.Entry(contenedor, width=15)
+    entrada_dni.grid(row=2, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Asunto:").grid(row=3, column=0, sticky="e", padx=5, pady=5)
+    entrada_asunto = ttk.Entry(contenedor, width=40)
+    entrada_asunto.grid(row=3, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Dependencia:").grid(row=4, column=0, sticky="e", padx=5, pady=5)
+    combo_dependencia = ttk.Combobox(contenedor, values=DEPENDENCIAS, state="readonly", width=25)
+    combo_dependencia.current(0)
+    combo_dependencia.grid(row=4, column=1, sticky="w", pady=5)
+
+    def registrar():
+        """Lee el formulario, registra el expediente y muestra el resultado."""
+        codigo = procesar_registro(expedientes, entrada_nombre.get(), entrada_dni.get(),
+                                   entrada_asunto.get(), combo_dependencia.get(), usuario)
+        if codigo is None:
+            messagebox.showwarning("Datos invalidos", REGLAS)
+            return
+        messagebox.showinfo("Registro", "Expediente registrado con codigo " + codigo)
+        entrada_nombre.delete(0, tk.END)
+        entrada_dni.delete(0, tk.END)
+        entrada_asunto.delete(0, tk.END)
+        combo_dependencia.current(0)
+        entrada_nombre.focus()
+
+    ttk.Button(contenedor, text="Registrar", command=registrar).grid(
+        row=5, column=1, sticky="w", pady=(10, 0))
+    entrada_nombre.focus()
+
+
 def crear_ventana_principal(ventana, usuario, rol):
     """Dibuja la ventana principal dentro de ventana y carga los expedientes.
 
@@ -105,7 +164,7 @@ def crear_ventana_principal(ventana, usuario, rol):
     def ver_registro():
         """Muestra el formulario de registro en area_contenido."""
         limpiar(area_contenido)
-        ttk.Label(area_contenido, text="Registrar expediente: en desarrollo").pack(anchor="nw")
+        mostrar_formulario_registro(area_contenido, expedientes, usuario)
 
     def ver_listado():
         """Muestra la tabla de expedientes (gui_tabla.py) en area_contenido."""
