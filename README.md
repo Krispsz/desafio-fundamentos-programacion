@@ -8,16 +8,16 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 
 ## Estructura del proyecto
 
-| Archivo              | Responsabilidad                                                      |
-|----------------------|----------------------------------------------------------------------|
-| `expediente.py`      | Estructura del expediente y generacion de codigos correlativos       |
-| `persistencia.py`    | Punto de entrada para guardar y cargar: elige texto o SQLite         |
-| `persistencia_db.py` | Lectura y escritura en la base SQLite `mesa_partes.db`               |
-| `validaciones.py`    | Normalizacion y validacion de los datos ingresados por el usuario    |
-| `registro.py`        | Registro y modificacion de expedientes (con validacion en bucle)     |
-| `procesamiento.py`   | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
-| `autenticacion.py`   | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
-| `main.py`            | Menu principal e integracion de todos los modulos                    |
+| Archivo            | Responsabilidad                                                     |
+|--------------------|---------------------------------------------------------------------|
+| `expediente.py`    | Estructura del expediente y generacion de codigos correlativos       |
+| `persistencia.py`  | Punto de entrada para guardar y cargar: elige texto o SQLite         |
+| `persistencia_db.py` | Lectura y escritura en la base SQLite `mesa_partes.db`           |
+| `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
+| `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
+| `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
+| `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
+| `main.py`          | Menu principal e integracion de todos los modulos                    |
 
 ## Convencion de codigo
 
