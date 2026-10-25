@@ -8,15 +8,16 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 
 ## Estructura del proyecto
 
-| Archivo            | Responsabilidad                                                     |
-|--------------------|---------------------------------------------------------------------|
-| `expediente.py`    | Estructura del expediente y generacion de codigos correlativos       |
-| `persistencia.py`  | Lectura y escritura del archivo de texto `expedientes.txt`           |
-| `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
-| `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
-| `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
-| `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
-| `main.py`          | Menu principal e integracion de todos los modulos                    |
+| Archivo              | Responsabilidad                                                      |
+|----------------------|----------------------------------------------------------------------|
+| `expediente.py`      | Estructura del expediente y generacion de codigos correlativos       |
+| `persistencia.py`    | Punto de entrada para guardar y cargar: elige texto o SQLite         |
+| `persistencia_db.py` | Lectura y escritura en la base SQLite `mesa_partes.db`               |
+| `validaciones.py`    | Normalizacion y validacion de los datos ingresados por el usuario    |
+| `registro.py`        | Registro y modificacion de expedientes (con validacion en bucle)     |
+| `procesamiento.py`   | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
+| `autenticacion.py`   | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
+| `main.py`            | Menu principal e integracion de todos los modulos                    |
 
 ## Convencion de codigo
 
@@ -57,6 +58,65 @@ EXP-0001|Juan Perez|12345678|Tramite X|2026-10-22|Recibido|Licencias|2026-10-22,
 El programa tambien lee el formato anterior de 5 campos (`codigo|nombre|dni|asunto|fecha`):
 esos expedientes quedan como `Recibido`, en `Mesa de Partes`, con historial a nombre de `sistema`,
 y se guardan con 8 campos la proxima vez.
+
+## Almacenamiento: texto o SQLite
+
+El programa puede guardar los expedientes en el archivo de texto `expedientes.txt`
+o en la base de datos SQLite `mesa_partes.db` (modulo `sqlite3` de la biblioteca estandar).
+Se elige con la constante `ALMACENAMIENTO` al inicio de `persistencia.py`:
+
+```python
+ALMACENAMIENTO = "txt"      # archivo de texto (valor por defecto)
+ALMACENAMIENTO = "sqlite"   # base de datos mesa_partes.db
+```
+
+El resto del programa no cambia: todos los modulos llaman a `cargar_desde_archivo()` y
+`guardar_en_archivo()`, y `persistencia.py` decide a donde van los datos.
+
+La base tiene dos tablas:
+
+```sql
+CREATE TABLE IF NOT EXISTS expedientes (
+    codigo      TEXT PRIMARY KEY,
+    nombre      TEXT NOT NULL,
+    dni         TEXT NOT NULL,
+    asunto      TEXT NOT NULL,
+    fecha       TEXT NOT NULL,
+    estado      TEXT NOT NULL,
+    dependencia TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS historial (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo  TEXT NOT NULL REFERENCES expedientes(codigo),
+    fecha   TEXT NOT NULL,
+    estado  TEXT NOT NULL,
+    usuario TEXT NOT NULL
+);
+```
+
+- `expedientes`: un expediente por fila.
+- `historial`: una fila por cada cambio de estado; `codigo` indica a que expediente
+  pertenece y `id` conserva el orden de las entradas.
+
+**Migracion automatica:** con `"sqlite"`, si `mesa_partes.db` todavia no existe y
+`expedientes.txt` si, al iniciar el programa se copian los expedientes del texto a la base
+(se aceptan los formatos de 5 y 8 campos). El `.txt` no se borra.
+
+**Consultas parametrizadas:** todas las consultas usan `?` en lugar de armar el SQL
+uniendo texto:
+
+```python
+# correcto: sqlite3 separa el dato del codigo SQL
+conexion.execute("INSERT INTO expedientes (codigo, nombre, ...) VALUES (?, ?, ...)",
+                 (codigo, nombre, ...))
+
+# incorrecto: un nombre como O'Brien rompe la consulta, y un texto malicioso
+# podria ejecutar otro SQL (inyeccion SQL)
+conexion.execute("INSERT INTO expedientes VALUES ('" + codigo + "', '" + nombre + "', ...)")
+```
+
+Con `?`, el dato nunca se interpreta como parte del SQL: se guarda tal cual,
+aunque tenga comillas.
 
 ## Autenticacion
 
@@ -110,7 +170,7 @@ Menu principal:
 5. Eliminar expediente
 6. Ordenar expedientes (codigo, nombre, dni, asunto o fecha) y mostrarlos en tabla
 7. Listar expedientes en tabla
-8. Salir (guarda en `expedientes.txt`)
+8. Salir (guarda en el almacenamiento configurado: `expedientes.txt` o `mesa_partes.db`)
 
 Las opciones 2 a 7 avisan "No hay expedientes registrados." si la lista esta vacia.
 
