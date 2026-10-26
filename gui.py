@@ -11,6 +11,7 @@ from tkinter import ttk, messagebox
 from autenticacion import verificar_login
 from expediente import DEPENDENCIAS
 from persistencia import cargar_desde_archivo, guardar_en_archivo
+from procesamiento import buscar_posicion
 from registro import preparar_datos, crear_registro
 
 # La tabla de expedientes (tarea 13) va en gui_tabla.py. Mientras no exista,
@@ -141,6 +142,47 @@ def mostrar_formulario_registro(contenedor, expedientes, usuario):
     entrada_nombre.focus()
 
 
+def mostrar_detalle(contenedor, expedientes, codigo, usuario, rol):
+    """Dibuja dentro de contenedor (ya vacio) los datos de un expediente y su historial.
+
+    Busca el expediente con buscar_posicion(). Si no existe muestra
+    "Expediente no encontrado". El historial se muestra en una tabla de solo
+    lectura (Fecha, Estado, Usuario) en el orden en que se guardo.
+    """
+    posicion = buscar_posicion(expedientes, codigo)
+    if posicion is None:
+        ttk.Label(contenedor, text="Expediente no encontrado").grid(row=0, column=0, sticky="w")
+        return
+    expediente = expedientes[posicion]
+
+    ttk.Label(contenedor, text="Expediente " + expediente["codigo"],
+              font=("Segoe UI", 12, "bold")).grid(row=0, column=0, columnspan=2,
+                                                  sticky="w", pady=(0, 10))
+    campos = [("Codigo:", "codigo"), ("Nombre:", "nombre"), ("DNI:", "dni"),
+              ("Asunto:", "asunto"), ("Fecha:", "fecha"), ("Estado:", "estado"),
+              ("Dependencia:", "dependencia")]
+    fila = 1
+    for etiqueta, clave in campos:
+        ttk.Label(contenedor, text=etiqueta).grid(row=fila, column=0, sticky="e", padx=5, pady=2)
+        ttk.Label(contenedor, text=expediente[clave]).grid(row=fila, column=1, sticky="w", pady=2)
+        fila = fila + 1
+
+    ttk.Label(contenedor, text="Historial", font=("Segoe UI", 10, "bold")).grid(
+        row=fila, column=0, columnspan=2, sticky="w", pady=(10, 4))
+    columnas = ("fecha", "estado", "usuario")
+    tabla_historial = ttk.Treeview(contenedor, columns=columnas, show="headings",
+                                   height=5, selectmode="none")
+    tabla_historial.heading("fecha", text="Fecha")
+    tabla_historial.heading("estado", text="Estado")
+    tabla_historial.heading("usuario", text="Usuario")
+    for columna in columnas:
+        tabla_historial.column(columna, width=130)
+    for entrada in expediente["historial"]:
+        tabla_historial.insert("", tk.END, values=(entrada["fecha"], entrada["estado"],
+                                                    entrada["usuario"]))
+    tabla_historial.grid(row=fila + 1, column=0, columnspan=2, sticky="w")
+
+
 def crear_ventana_principal(ventana, usuario, rol):
     """Dibuja la ventana principal dentro de ventana y carga los expedientes.
 
@@ -179,6 +221,27 @@ def crear_ventana_principal(ventana, usuario, rol):
             return
         mostrar_tabla(area_contenido, expedientes, usuario, rol)
 
+    def ver_expediente():
+        """Muestra un campo Codigo y un boton Buscar que abre mostrar_detalle()."""
+        limpiar(area_contenido)
+        busqueda = ttk.Frame(area_contenido)
+        busqueda.pack(anchor="nw")
+        ttk.Label(busqueda, text="Codigo:").pack(side="left", padx=(0, 5))
+        entrada_codigo = ttk.Entry(busqueda, width=15)
+        entrada_codigo.pack(side="left")
+        resultado = ttk.Frame(area_contenido)
+        resultado.pack(anchor="nw", fill="both", expand=True, pady=(15, 0))
+
+        def buscar(evento=None):
+            """Limpia el resultado anterior y muestra el detalle del codigo escrito."""
+            limpiar(resultado)
+            codigo = entrada_codigo.get().strip().upper()
+            mostrar_detalle(resultado, expedientes, codigo, usuario, rol)
+
+        ttk.Button(busqueda, text="Buscar", command=buscar).pack(side="left", padx=5)
+        entrada_codigo.bind("<Return>", buscar)
+        entrada_codigo.focus()
+
     def salir():
         """Guarda los expedientes, avisa si falla y cierra la ventana."""
         if not guardar_en_archivo(expedientes):
@@ -187,6 +250,7 @@ def crear_ventana_principal(ventana, usuario, rol):
 
     ttk.Button(menu, text="Registrar", width=18, command=ver_registro).pack(pady=4)
     ttk.Button(menu, text="Listar / Buscar", width=18, command=ver_listado).pack(pady=4)
+    ttk.Button(menu, text="Ver expediente", width=18, command=ver_expediente).pack(pady=4)
     ttk.Button(menu, text="Salir", width=18, command=salir).pack(pady=4)
     ventana.protocol("WM_DELETE_WINDOW", salir)
 
