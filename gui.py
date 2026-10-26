@@ -88,7 +88,8 @@ def crear_ventana_login(ventana, al_ingresar):
 def procesar_registro(expedientes, nombre, dni, asunto, dependencia, usuario):
     """Valida con preparar_datos() y crea el expediente con crear_registro().
 
-    Retorna el codigo del nuevo expediente, o None si los datos no son validos.
+    Retorna lo mismo que crear_registro(): la tupla (codigo, guardado), con el
+    codigo asignado y si el guardado tuvo exito; o None si los datos no son validos.
     """
     datos = preparar_datos(nombre, dni, asunto)
     if datos is None:
@@ -120,12 +121,15 @@ def mostrar_formulario_registro(contenedor, expedientes, usuario):
 
     def registrar():
         """Lee el formulario, registra el expediente y muestra el resultado."""
-        codigo = procesar_registro(expedientes, entrada_nombre.get(), entrada_dni.get(),
-                                   entrada_asunto.get(), combo_dependencia.get(), usuario)
-        if codigo is None:
+        resultado = procesar_registro(expedientes, entrada_nombre.get(), entrada_dni.get(),
+                                      entrada_asunto.get(), combo_dependencia.get(), usuario)
+        if resultado is None:
             messagebox.showwarning("Datos invalidos", REGLAS)
             return
+        codigo, guardado = resultado
         messagebox.showinfo("Registro", "Expediente registrado con codigo " + codigo)
+        if not guardado:
+            messagebox.showerror("Error", "El expediente se registro pero no se pudo guardar.")
         entrada_nombre.delete(0, tk.END)
         entrada_dni.delete(0, tk.END)
         entrada_asunto.delete(0, tk.END)
