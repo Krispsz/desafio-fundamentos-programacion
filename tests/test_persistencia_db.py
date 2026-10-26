@@ -1,9 +1,9 @@
 """Pruebas de persistencia_db.py (SQLite) y del selector de persistencia.py.
 
 Cada prueba trabaja en una carpeta temporal: nunca se toca el mesa_partes.db real.
-Los valores por defecto ruta=RUTA_DB se fijan al cargar el modulo, por eso
 setUp tambien cambia la carpeta de trabajo a la temporal: asi cualquier ruta
-relativa (mesa_partes.db, expedientes.txt) queda dentro de ella.
+relativa (mesa_partes.db, expedientes.txt) queda dentro de ella, aunque alguna
+prueba olvide enviar la ruta.
 """
 
 import os
@@ -87,6 +87,14 @@ class PruebasPersistenciaDB(unittest.TestCase):
             filas = conexion.execute(
                 "SELECT COUNT(*) FROM historial WHERE codigo = ?", ("EXP-0001",)).fetchone()
         self.assertEqual(filas[0], 0)
+
+    def test_guardar_sin_ruta_usa_ruta_db_cambiada_al_llamar(self):
+        ruta = os.path.join(self.carpeta.name, "otra_base.db")
+        persistencia_db.RUTA_DB = ruta
+        self.assertTrue(persistencia_db.guardar_en_db(expedientes_de_prueba()))
+        self.assertTrue(os.path.exists(ruta))
+        self.assertFalse(os.path.exists(self.ruta_db))
+        self.assertEqual(len(persistencia_db.cargar_desde_db(ruta)), 2)
 
     def test_base_inexistente_da_lista_vacia(self):
         self.assertEqual(persistencia_db.cargar_desde_db(self.ruta_db), [])
