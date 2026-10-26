@@ -32,11 +32,16 @@ CREATE TABLE IF NOT EXISTS historial (
 )"""
 
 
-def crear_tablas(ruta=RUTA_DB):
+def crear_tablas(ruta=None):
     """Crea las tablas expedientes e historial si no existen.
 
     Retorna True si quedaron creadas y False si hubo un error de SQLite.
+    Si no se envia ruta se usa RUTA_DB, leida al llamar a la funcion: un valor
+    por defecto ruta=RUTA_DB se fijaria al importar el modulo y no veria los
+    cambios posteriores de persistencia_db.RUTA_DB.
     """
+    if ruta is None:
+        ruta = RUTA_DB
     try:
         with sqlite3.connect(ruta) as conexion:
             conexion.execute(SQL_TABLA_EXPEDIENTES)
@@ -47,14 +52,19 @@ def crear_tablas(ruta=RUTA_DB):
     return True
 
 
-def guardar_en_db(expedientes, ruta=RUTA_DB):
+def guardar_en_db(expedientes, ruta=None):
     """Reemplaza todo el contenido de la base con la lista de expedientes.
 
     Igual que el .txt, que se sobrescribe completo: borra las dos tablas y
     vuelve a insertar todo. Se hace en una sola transaccion (el bloque with):
     si algo falla, se deshace y la base queda como estaba.
     Retorna True si se guardo y False si hubo un error.
+    Si no se envia ruta se usa RUTA_DB, leida al llamar a la funcion: un valor
+    por defecto ruta=RUTA_DB se fijaria al importar el modulo y no veria los
+    cambios posteriores de persistencia_db.RUTA_DB.
     """
+    if ruta is None:
+        ruta = RUTA_DB
     if not crear_tablas(ruta):
         return False
     try:
@@ -79,13 +89,18 @@ def guardar_en_db(expedientes, ruta=RUTA_DB):
     return True
 
 
-def cargar_desde_db(ruta=RUTA_DB):
+def cargar_desde_db(ruta=None):
     """Lee la base y retorna la lista de expedientes ordenada por codigo.
 
     Cada expediente tiene el mismo formato que crear_expediente(), con su
     historial como lista de {"fecha", "estado", "usuario"} en el orden en que
     se guardo (por id). Si la base no existe o hay un error, retorna [].
+    Si no se envia ruta se usa RUTA_DB, leida al llamar a la funcion: un valor
+    por defecto ruta=RUTA_DB se fijaria al importar el modulo y no veria los
+    cambios posteriores de persistencia_db.RUTA_DB.
     """
+    if ruta is None:
+        ruta = RUTA_DB
     if not os.path.exists(ruta):
         return []
     expedientes = []
@@ -111,12 +126,17 @@ def cargar_desde_db(ruta=RUTA_DB):
     return expedientes
 
 
-def migrar_txt_a_db(ruta_txt, ruta_db=RUTA_DB):
+def migrar_txt_a_db(ruta_txt, ruta_db=None):
     """Copia los expedientes de expedientes.txt a la base de datos.
 
     Retorna la cantidad de expedientes migrados, o -1 si el archivo de texto
     no existe o no se pudo guardar en la base.
+    Si no se envia ruta_db se usa RUTA_DB, leida al llamar a la funcion: un valor
+    por defecto ruta_db=RUTA_DB se fijaria al importar el modulo y no veria los
+    cambios posteriores de persistencia_db.RUTA_DB.
     """
+    if ruta_db is None:
+        ruta_db = RUTA_DB
     # Se importa aqui y no arriba para evitar una importacion circular:
     # persistencia.py tambien importa este modulo.
     from persistencia import cargar_desde_txt
