@@ -12,7 +12,7 @@ from autenticacion import verificar_login
 from expediente import DEPENDENCIAS
 from persistencia import cargar_desde_archivo, guardar_en_archivo
 from procesamiento import buscar_posicion
-from registro import preparar_datos, crear_registro
+from registro import preparar_datos, crear_registro, aplicar_modificacion
 
 # La tabla de expedientes (tarea 13) va en gui_tabla.py. Mientras no exista,
 # el boton "Listar / Buscar" muestra un aviso.
@@ -155,9 +155,17 @@ def mostrar_detalle(contenedor, expedientes, codigo, usuario, rol):
         return
     expediente = expedientes[posicion]
 
-    ttk.Label(contenedor, text="Expediente " + expediente["codigo"],
-              font=("Segoe UI", 12, "bold")).grid(row=0, column=0, columnspan=2,
-                                                  sticky="w", pady=(0, 10))
+    def modificar():
+        """Reemplaza el detalle por el formulario de modificacion."""
+        limpiar(contenedor)
+        mostrar_formulario_modificacion(contenedor, expedientes, codigo, usuario, rol)
+
+    # El titulo y el boton Modificar van en la misma fila, arriba de los datos
+    encabezado = ttk.Frame(contenedor)
+    encabezado.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+    ttk.Label(encabezado, text="Expediente " + expediente["codigo"],
+              font=("Segoe UI", 12, "bold")).pack(side="left")
+    ttk.Button(encabezado, text="Modificar", command=modificar).pack(side="left", padx=(15, 0))
     campos = [("Codigo:", "codigo"), ("Nombre:", "nombre"), ("DNI:", "dni"),
               ("Asunto:", "asunto"), ("Fecha:", "fecha"), ("Estado:", "estado"),
               ("Dependencia:", "dependencia")]
@@ -181,6 +189,79 @@ def mostrar_detalle(contenedor, expedientes, codigo, usuario, rol):
         tabla_historial.insert("", tk.END, values=(entrada["fecha"], entrada["estado"],
                                                     entrada["usuario"]))
     tabla_historial.grid(row=fila + 1, column=0, columnspan=2, sticky="w")
+
+
+def procesar_modificacion(expedientes, codigo, nombre, dni, asunto):
+    """Valida con preparar_datos() y modifica el expediente con aplicar_modificacion().
+
+    Retorna None si los datos no son validos, o (modifico, guardado): si
+    existia el codigo y si el guardado tuvo exito.
+    """
+    datos = preparar_datos(nombre, dni, asunto)
+    if datos is None:
+        return None
+    return aplicar_modificacion(expedientes, codigo, datos[0], datos[1], datos[2])
+
+
+def mostrar_formulario_modificacion(contenedor, expedientes, codigo, usuario, rol):
+    """Dibuja dentro de contenedor (ya vacio) el formulario para modificar un expediente.
+
+    Nombre, DNI y Asunto vienen llenos con los datos actuales; estado y
+    dependencia solo se muestran (se cambian en otra vista). "Guardar cambios"
+    usa procesar_modificacion() y "Cancelar" vuelve al detalle sin cambiar nada.
+    """
+    posicion = buscar_posicion(expedientes, codigo)
+    if posicion is None:
+        ttk.Label(contenedor, text="Expediente no encontrado").grid(row=0, column=0, sticky="w")
+        return
+    expediente = expedientes[posicion]
+
+    ttk.Label(contenedor, text="Modificar expediente " + codigo,
+              font=("Segoe UI", 12, "bold")).grid(row=0, column=0, columnspan=2,
+                                                  sticky="w", pady=(0, 10))
+    ttk.Label(contenedor, text="Nombre:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+    entrada_nombre = ttk.Entry(contenedor, width=40)
+    entrada_nombre.insert(0, expediente["nombre"])
+    entrada_nombre.grid(row=1, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="DNI:").grid(row=2, column=0, sticky="e", padx=5, pady=5)
+    entrada_dni = ttk.Entry(contenedor, width=15)
+    entrada_dni.insert(0, expediente["dni"])
+    entrada_dni.grid(row=2, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Asunto:").grid(row=3, column=0, sticky="e", padx=5, pady=5)
+    entrada_asunto = ttk.Entry(contenedor, width=40)
+    entrada_asunto.insert(0, expediente["asunto"])
+    entrada_asunto.grid(row=3, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Estado:").grid(row=4, column=0, sticky="e", padx=5, pady=5)
+    ttk.Label(contenedor, text=expediente["estado"]).grid(row=4, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Dependencia:").grid(row=5, column=0, sticky="e", padx=5, pady=5)
+    ttk.Label(contenedor, text=expediente["dependencia"]).grid(row=5, column=1, sticky="w", pady=5)
+
+    def volver_al_detalle():
+        """Reemplaza el formulario por la vista de detalle."""
+        limpiar(contenedor)
+        mostrar_detalle(contenedor, expedientes, codigo, usuario, rol)
+
+    def guardar_cambios():
+        """Lee el formulario, aplica la modificacion y muestra el resultado."""
+        resultado = procesar_modificacion(expedientes, codigo, entrada_nombre.get(),
+                                          entrada_dni.get(), entrada_asunto.get())
+        if resultado is None:
+            messagebox.showwarning("Datos invalidos", REGLAS)
+            return
+        modifico, guardado = resultado
+        if not modifico:
+            messagebox.showwarning("Modificar", "Expediente no encontrado.")
+            return
+        messagebox.showinfo("Modificar", "Expediente modificado.")
+        if not guardado:
+            messagebox.showerror("Error", "El expediente se modifico pero no se pudo guardar.")
+        volver_al_detalle()
+
+    botones = ttk.Frame(contenedor)
+    botones.grid(row=6, column=1, sticky="w", pady=(10, 0))
+    ttk.Button(botones, text="Guardar cambios", command=guardar_cambios).pack(side="left")
+    ttk.Button(botones, text="Cancelar", command=volver_al_detalle).pack(side="left", padx=5)
+    entrada_nombre.focus()
 
 
 def crear_ventana_principal(ventana, usuario, rol):
