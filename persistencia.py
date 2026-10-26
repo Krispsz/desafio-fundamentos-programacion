@@ -1,14 +1,28 @@
-"""Lectura y escritura de los expedientes en un archivo de texto plano."""
+"""Lectura y escritura de los expedientes en el almacenamiento configurado.
 
+Es el unico punto de entrada para guardar y cargar: el resto del programa
+llama a cargar_desde_archivo() y guardar_en_archivo(), y este modulo decide
+si los datos van al archivo de texto o a la base de datos SQLite.
+"""
+
+import os
+
+import persistencia_db
 from expediente import crear_expediente, historial_a_texto, texto_a_historial
+
+# Donde se guardan los expedientes:
+# - "txt":    archivo de texto plano expedientes.txt
+# - "sqlite": base de datos mesa_partes.db (ver persistencia_db.py)
+# Para cambiarlo, edite este valor y vuelva a ejecutar el programa.
+ALMACENAMIENTO = "txt"
 
 RUTA_ARCHIVO = "expedientes.txt"
 
 SEPARADOR = "|"
 
 
-def cargar_desde_archivo(ruta=RUTA_ARCHIVO):
-    """Lee el archivo y retorna la lista de expedientes reconstruidos.
+def cargar_desde_txt(ruta=RUTA_ARCHIVO):
+    """Lee el archivo de texto y retorna la lista de expedientes reconstruidos.
 
     Acepta dos formatos de linea:
     - 8 campos: codigo|nombre|dni|asunto|fecha|estado|dependencia|historial
@@ -39,8 +53,8 @@ def cargar_desde_archivo(ruta=RUTA_ARCHIVO):
     return expedientes
 
 
-def guardar_en_archivo(expedientes, ruta=RUTA_ARCHIVO):
-    """Sobrescribe el archivo con todos los expedientes (8 campos por linea).
+def guardar_en_txt(expedientes, ruta=RUTA_ARCHIVO):
+    """Sobrescribe el archivo de texto con todos los expedientes (8 campos por linea).
 
     Retorna True si se guardo y False si hubo un error de escritura.
     """
@@ -61,3 +75,31 @@ def guardar_en_archivo(expedientes, ruta=RUTA_ARCHIVO):
     except OSError:
         return False
     return True
+
+
+def cargar_desde_archivo(ruta=RUTA_ARCHIVO):
+    """Carga los expedientes desde el almacenamiento configurado.
+
+    - Con ALMACENAMIENTO = "txt" lee el archivo de texto ruta.
+    - Con ALMACENAMIENTO = "sqlite" lee mesa_partes.db. Si la base todavia no
+      existe y el archivo de texto ruta si, primero migra el texto a la base.
+    Retorna la lista de expedientes (vacia si no hay datos o no se pueden leer).
+    """
+    if ALMACENAMIENTO == "sqlite":
+        if not os.path.exists(persistencia_db.RUTA_DB) and os.path.exists(ruta):
+            persistencia_db.migrar_txt_a_db(ruta)
+        return persistencia_db.cargar_desde_db()
+    return cargar_desde_txt(ruta)
+
+
+def guardar_en_archivo(expedientes, ruta=RUTA_ARCHIVO):
+    """Guarda todos los expedientes en el almacenamiento configurado.
+
+    - Con ALMACENAMIENTO = "txt" sobrescribe el archivo de texto ruta.
+    - Con ALMACENAMIENTO = "sqlite" reemplaza el contenido de mesa_partes.db
+      (ruta no se usa).
+    Retorna True si se guardo y False si hubo un error.
+    """
+    if ALMACENAMIENTO == "sqlite":
+        return persistencia_db.guardar_en_db(expedientes)
+    return guardar_en_txt(expedientes, ruta)

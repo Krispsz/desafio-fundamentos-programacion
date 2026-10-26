@@ -8,6 +8,7 @@ env/
 
 # Datos generados en tiempo de ejecucion
 expedientes.txt
+*.db
 
 # Entornos y editores
 .vscode/
