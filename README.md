@@ -18,7 +18,7 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
 | `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
-| `gui.py`           | Interfaz grafica (tkinter): login, ventana principal y registro      |
+| `gui.py`           | Interfaz grafica (tkinter): login, ventana principal, registro, detalle y modificacion |
 
 ## Convencion de codigo
 
@@ -192,12 +192,23 @@ python gui.py
   Usa `verificar_login()` de `autenticacion.py`. Hay **3 intentos**: se muestran los intentos
   restantes y al tercer error aparece "Acceso bloqueado" y la ventana se cierra.
 - **Ventana principal:** arriba `Usuario: <usuario> (<rol>)`; a la izquierda los botones
-  Registrar, Listar / Buscar y Salir; a la derecha el marco `area_contenido`, donde se dibuja
-  cada vista. Al abrir carga los expedientes con `cargar_desde_archivo()` y al salir (boton
+  Registrar, Listar / Buscar, Ver expediente y Salir; a la derecha el marco `area_contenido`,
+  donde se dibuja cada vista. Al abrir carga los expedientes con `cargar_desde_archivo()` y al salir (boton
   Salir o la X de la ventana) guarda con `guardar_en_archivo()`.
 - **Registrar:** formulario con Nombre, DNI, Asunto y una lista de solo lectura con las
   dependencias. Usa `preparar_datos()` y `crear_registro()` de `registro.py`, las mismas
   funciones que la consola.
+- **Ver expediente:** campo Codigo y boton "Buscar" (el codigo se pasa a mayusculas, asi
+  `exp-0001` tambien sirve). Muestra los datos del expediente (codigo, nombre, DNI, asunto,
+  fecha, estado y dependencia) y su **historial** en una tabla de solo lectura con las columnas
+  Fecha, Estado y Usuario, en el orden guardado. Si el codigo no existe muestra
+  "Expediente no encontrado". La vista la dibuja `mostrar_detalle(contenedor, expedientes,
+  codigo, usuario, rol)`, que tambien puede llamar la tabla de expedientes.
+- **Modificar:** desde el detalle, el boton "Modificar" abre un formulario con Nombre, DNI y
+  Asunto ya llenos; estado y dependencia solo se muestran (se cambian en otra tarea).
+  "Guardar cambios" usa `preparar_datos()` y `aplicar_modificacion()` de `registro.py`
+  (a traves de `procesar_modificacion()`), que conservan fecha, estado, dependencia e
+  historial. "Cancelar" vuelve al detalle sin cambiar nada.
 
 Igual que en la consola, `gui.py` solo arma los widgets: la logica sigue en los otros modulos.
 
@@ -222,8 +233,20 @@ Lo que se espera de `mostrar_tabla`:
 - Dibujar todo dentro de `contenedor` (no crear otra ventana `Tk`).
 - Modificar la lista `expedientes` **en el lugar** (por ejemplo con `pop`), sin reemplazarla
   por otra lista, para que la ventana principal guarde los cambios al salir.
-- Despues de eliminar un expediente, llamar a `guardar_en_archivo(expedientes)`.
+- Para eliminar, usar `eliminar_por_codigo(expedientes, codigo)` de `procesamiento.py`, que ya
+  guarda y retorna `(eliminado, guardado)`.
 - Mostrar o habilitar la opcion de eliminar **solo si `rol == "administrador"`**.
+- Para abrir el detalle de una fila (por ejemplo con doble clic), llamar a
+  `gui.mostrar_detalle(contenedor, expedientes, codigo, usuario, rol)`. Importar `gui`
+  **dentro** de la funcion que lo usa, no al inicio del archivo, para evitar una importacion
+  circular (`gui.py` importa `gui_tabla.py`):
+
+  ```python
+  def abrir_detalle(contenedor, expedientes, codigo, usuario, rol):
+      import gui
+      gui.limpiar(contenedor)
+      gui.mostrar_detalle(contenedor, expedientes, codigo, usuario, rol)
+  ```
 
 Mientras `gui_tabla.py` no exista, el boton muestra "Tabla de expedientes: en desarrollo (tarea 13)".
 
