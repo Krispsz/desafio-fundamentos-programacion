@@ -84,7 +84,7 @@ def main():
     if guardar_en_archivo(expedientes):
         print("Datos guardados. Hasta luego.")
     else:
-        print("No se pudo guardar en expedientes.txt. Revise el archivo.")
+        print("No se pudieron guardar los datos.")
 
 if __name__ == "__main__":
     main()
