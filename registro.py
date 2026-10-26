@@ -24,29 +24,30 @@ def obtener_dependencia(opcion):
 
 
 def crear_registro(expedientes, nombre, dni, asunto, dependencia, usuario):
-    """Crea el expediente con historial, lo agrega y guarda. Retorna el codigo."""
+    """Crea el expediente con historial, lo agrega y guarda.
+    Retorna (codigo, guardado): el codigo asignado y si el guardado tuvo exito."""
     codigo = generar_codigo(expedientes)
     fecha = date.today().isoformat()
     historial = [{"fecha": fecha, "estado": "Recibido", "usuario": usuario}]
     nuevo = crear_expediente(codigo, nombre, dni, asunto, fecha,
                              "Recibido", dependencia, historial)
     expedientes.append(nuevo)
-    guardar_en_archivo(expedientes)
-    return codigo
+    guardado = guardar_en_archivo(expedientes)
+    return codigo, guardado
 
 
 def aplicar_modificacion(expedientes, codigo, nombre, dni, asunto):
     """Reemplaza el expediente conservando fecha, estado, dependencia e historial.
-    Retorna True si modifico, False si el codigo no existe."""
+    Retorna (modifico, guardado): si existia el codigo y si el guardado tuvo exito."""
     pos = buscar_posicion(expedientes, codigo)
     if pos is None:
-        return False
+        return False, False
     original = expedientes[pos]
     expedientes[pos] = crear_expediente(codigo, nombre, dni, asunto, original["fecha"],
                                         original["estado"], original["dependencia"],
                                         original["historial"])
-    guardar_en_archivo(expedientes)
-    return True
+    guardado = guardar_en_archivo(expedientes)
+    return True, guardado
 
 
 def elegir_dependencia():
@@ -74,15 +75,17 @@ def registrar_expediente(expedientes, usuario):
             break
         print("Datos invalidos, intente de nuevo.")
     dependencia = elegir_dependencia()
-    codigo = crear_registro(expedientes, datos[0], datos[1], datos[2],
-                            dependencia, usuario)
+    codigo, guardado = crear_registro(expedientes, datos[0], datos[1], datos[2],
+                                      dependencia, usuario)
     print("Expediente registrado con codigo " + codigo)
+    if not guardado:
+        print("No se pudo guardar en expedientes.txt. Revise el archivo.")
 
 
 def modificar_expediente(expedientes):
     """Busca por codigo con buscar_posicion(). Si no existe, avisa.
     Si existe, pide datos nuevos, valida en bucle y llama a aplicar_modificacion()."""
-    codigo = input("Codigo a modificar: ")
+    codigo = input("Codigo a modificar: ").strip()
     if buscar_posicion(expedientes, codigo) is None:
         print("Expediente no encontrado.")
         return
@@ -94,5 +97,11 @@ def modificar_expediente(expedientes):
         if datos is not None:
             break
         print("Datos invalidos, intente de nuevo.")
-    aplicar_modificacion(expedientes, codigo, datos[0], datos[1], datos[2])
-    print("Expediente modificado.")
+    modifico, guardado = aplicar_modificacion(expedientes, codigo, datos[0], datos[1],
+                                              datos[2])
+    if modifico:
+        print("Expediente modificado.")
+        if not guardado:
+            print("No se pudo guardar en expedientes.txt. Revise el archivo.")
+    else:
+        print("Expediente no encontrado.")
