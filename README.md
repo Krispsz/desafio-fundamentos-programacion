@@ -227,6 +227,26 @@ Lo que se espera de `mostrar_tabla`:
 
 Mientras `gui_tabla.py` no exista, el boton muestra "Tabla de expedientes: en desarrollo (tarea 13)".
 
+## Pruebas automaticas
+
+Las pruebas usan `unittest` (biblioteca estandar) y estan en la carpeta `tests/`.
+Se ejecutan desde la raiz del repositorio:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+| Archivo                       | Que cubre                                                       |
+|-------------------------------|-----------------------------------------------------------------|
+| `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, y `generar_codigo` (mayor + 1, cuatro digitos) |
+| `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos y error al guardar |
+| `tests/test_persistencia_db.py` | SQLite: creacion de tablas, guardar y cargar con historial en orden, nombres con apostrofe (`O'Brien`), borrado del historial, base inexistente, `migrar_txt_a_db` y migracion automatica en modo `"sqlite"` |
+
+Cada prueba trabaja en una **carpeta temporal** (`tempfile.TemporaryDirectory()`) que se
+crea en `setUp` y se borra en `tearDown`: las pruebas nunca tocan los `expedientes.txt`,
+`usuarios.txt` ni `mesa_partes.db` reales. Si una prueba cambia `persistencia.ALMACENAMIENTO`
+o `persistencia_db.RUTA_DB`, el valor original se restaura al terminar.
+
 ## Normalizacion y validacion de entradas
 
 Antes de validar, cada dato se normaliza con metodos de cadenas:
