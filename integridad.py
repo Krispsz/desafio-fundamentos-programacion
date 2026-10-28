@@ -97,17 +97,17 @@ def revisar_lista(expedientes):
 
 
 def resumir_rechazos(rechazos):
-    """Retorna el texto que explica que expedientes se omitieron y por que."""
+    """Retorna el texto que avisa que expedientes deben corregirse y por que."""
     if not rechazos:
         return ""
     detalles = []
     for rechazo in rechazos[:MAXIMO_DETALLES]:
         detalles.append(rechazo["codigo"] + " (" + rechazo["motivo"] + ")")
     if len(rechazos) == 1:
-        resumen = "Se omitio 1 expediente con datos invalidos: "
+        resumen = "1 expediente tiene datos invalidos y debe corregirse: "
     else:
-        resumen = ("Se omitieron " + str(len(rechazos))
-                   + " expedientes con datos invalidos: ")
+        resumen = (str(len(rechazos))
+                   + " expedientes tienen datos invalidos y deben corregirse: ")
     resumen = resumen + "; ".join(detalles)
     restantes = len(rechazos) - MAXIMO_DETALLES
     if restantes > 0:

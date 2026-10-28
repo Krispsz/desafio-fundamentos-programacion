@@ -10,7 +10,7 @@ import unittest
 
 import integridad
 import persistencia
-from expediente import crear_expediente
+from expediente import crear_expediente, generar_codigo
 
 
 def crear_valido(**cambios):
@@ -101,7 +101,17 @@ class PruebasDeLista(unittest.TestCase):
             [{"codigo": "EXP-0007", "motivo": "dni invalido"}])
         self.assertIn("EXP-0007", resumen)
         self.assertIn("dni invalido", resumen)
+        self.assertIn("debe corregirse", resumen)
         self.assertEqual(integridad.resumir_rechazos([]), "")
+
+    def test_resumen_en_plural_usa_deben_corregirse(self):
+        resumen = integridad.resumir_rechazos([
+            {"codigo": "EXP-0001", "motivo": "dni invalido"},
+            {"codigo": "EXP-0002", "motivo": "estado desconocido"},
+        ])
+        self.assertIn("2 expedientes", resumen)
+        self.assertIn("deben corregirse", resumen)
+        self.assertNotIn("omitieron", resumen)
 
 
 class PruebasDeCarga(unittest.TestCase):
@@ -120,7 +130,7 @@ class PruebasDeCarga(unittest.TestCase):
         with open(self.ruta, "w", encoding="utf-8", newline="\n") as archivo:
             archivo.write("\n".join(lineas) + "\n")
 
-    def test_carga_omite_lineas_con_datos_invalidos(self):
+    def test_carga_conserva_los_expedientes_con_datos_invalidos(self):
         self.escribir([
             "EXP-0001|Juan Perez|30112233|Solicitud de licencia|2026-10-20|En proceso|Licencias|2026-10-20,Recibido,sistema",
             "EXP-0002|Maria Lopez|ABC|Constancia|2026-10-21|Recibido|Rentas|2026-10-21,Recibido,sistema",
@@ -129,7 +139,8 @@ class PruebasDeCarga(unittest.TestCase):
             "linea|mal|formada",
         ])
         expedientes, rechazos = persistencia.cargar_con_informe(self.ruta)
-        self.assertEqual([e["codigo"] for e in expedientes], ["EXP-0001", "EXP-0004"])
+        self.assertEqual([e["codigo"] for e in expedientes],
+                         ["EXP-0001", "EXP-0002", "EXP-0003", "EXP-0004"])
         self.assertEqual(len(rechazos), 3)
 
     def test_carga_de_cinco_campos_sigue_siendo_valida(self):
@@ -141,13 +152,42 @@ class PruebasDeCarga(unittest.TestCase):
     def test_archivo_inexistente_no_reporta_rechazos(self):
         self.assertEqual(persistencia.cargar_con_informe(self.ruta), ([], []))
 
-    def test_cargar_desde_archivo_devuelve_solo_los_integros(self):
+    def test_cargar_desde_archivo_conserva_todos_los_expedientes(self):
         self.escribir([
             "EXP-0001|Juan Perez|30112233|Solicitud de licencia|2026-10-20|En proceso|Licencias|2026-10-20,Recibido,sistema",
             "EXP-0002|Maria Lopez|ABC|Constancia|2026-10-21|Recibido|Rentas|2026-10-21,Recibido,sistema",
         ])
         self.assertEqual([e["codigo"] for e in persistencia.cargar_desde_archivo(self.ruta)],
-                         ["EXP-0001"])
+                         ["EXP-0001", "EXP-0002"])
+
+    def test_expediente_invalido_sobrevive_cargar_y_guardar(self):
+        self.escribir([
+            "EXP-0001|Juan Perez|30112233|Solicitud|2026-10-20|En proceso|Licencias|2026-10-20,Recibido,sistema",
+            "EXP-0002|Maria Lopez|1234567|Reclamo|2026-10-22",
+        ])
+        expedientes, rechazos = persistencia.cargar_con_informe(self.ruta)
+        self.assertEqual([r["codigo"] for r in rechazos], ["EXP-0002"])
+        self.assertTrue(persistencia.guardar_en_archivo(expedientes, self.ruta))
+        expedientes_guardados, rechazos_guardados = persistencia.cargar_con_informe(self.ruta)
+        self.assertEqual([e["codigo"] for e in expedientes_guardados],
+                         ["EXP-0001", "EXP-0002"])
+        self.assertEqual([r["codigo"] for r in rechazos_guardados], ["EXP-0002"])
+
+    def test_codigo_de_rechazado_no_se_reutiliza(self):
+        self.escribir([
+            "EXP-0001|Juan Perez|30112233|Solicitud|2026-10-20|En proceso|Licencias|2026-10-20,Recibido,sistema",
+            "EXP-0002|Maria Lopez|1234567|Reclamo|2026-10-22",
+        ])
+        expedientes, rechazos = persistencia.cargar_con_informe(self.ruta)
+        self.assertEqual(len(rechazos), 1)
+        self.assertEqual(generar_codigo(expedientes), "EXP-0003")
+
+    def test_archivo_con_bom_conserva_el_primer_expediente(self):
+        with open(self.ruta, "w", encoding="utf-8-sig", newline="\n") as archivo:
+            archivo.write("EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n")
+        expedientes, rechazos = persistencia.cargar_con_informe(self.ruta)
+        self.assertEqual([e["codigo"] for e in expedientes], ["EXP-0001"])
+        self.assertEqual(rechazos, [])
 
 
 if __name__ == "__main__":
