@@ -5,8 +5,9 @@ los modulos de logica solo reciben parametros y retornan valores."""
 
 import getpass
 
+import integridad
 from autenticacion import verificar_login
-from persistencia import cargar_desde_archivo, guardar_en_archivo
+from persistencia import cargar_con_informe, guardar_en_archivo
 from registro import registrar_expediente, modificar_expediente
 from procesamiento import (buscar_expediente, buscar_textual, ordenar_expedientes,
                            eliminar_expediente, listar_expedientes)
@@ -53,8 +54,10 @@ def main():
         print("Acceso bloqueado: se agotaron los " + str(MAX_INTENTOS) + " intentos.")
         return
     print("Bienvenido, " + usuario + " (" + rol + ")")
-    expedientes = cargar_desde_archivo()
+    expedientes, rechazos = cargar_con_informe()
     print("Expedientes cargados: " + str(len(expedientes)))
+    if rechazos:
+        print(integridad.resumir_rechazos(rechazos))
     salir = False
     while not salir:
         mostrar_menu()

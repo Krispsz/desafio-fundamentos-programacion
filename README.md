@@ -13,6 +13,7 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `expediente.py`    | Estructura del expediente y generacion de codigos correlativos       |
 | `persistencia.py`  | Punto de entrada para guardar y cargar: elige texto o SQLite         |
 | `persistencia_db.py` | Lectura y escritura en la base SQLite `mesa_partes.db`           |
+| `integridad.py`    | Revision de los datos leidos del archivo antes de aceptarlos          |
 | `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
 | `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
 | `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
@@ -59,6 +60,40 @@ EXP-0001|Juan Perez|12345678|Tramite X|2026-10-22|Recibido|Licencias|2026-10-22,
 El programa tambien lee el formato anterior de 5 campos (`codigo|nombre|dni|asunto|fecha`):
 esos expedientes quedan como `Recibido`, en `Mesa de Partes`, con historial a nombre de `sistema`,
 y se guardan con 8 campos la proxima vez.
+
+## Validacion de integridad al cargar
+
+`integridad.py` revisa cada expediente reconstruido antes de aceptarlo. Un
+expediente se omite (no se borra del archivo: se salta al cargar) si:
+
+- el codigo no tiene la forma `EXP-####`;
+- el nombre o el asunto estan vacios o contienen el separador `|`;
+- el DNI no tiene exactamente 8 digitos;
+- la fecha no es una fecha real con formato `AAAA-MM-DD` (por ejemplo, `2026-02-30`);
+- el estado no esta en `Recibido`, `En proceso`, `Atendido`;
+- la dependencia no esta en el catalogo de `expediente.py`;
+- el historial esta vacio o tiene entradas con fecha, estado o usuario invalidos;
+- el codigo ya aparecio en una linea anterior (codigo repetido).
+
+La revision deja intactos los formatos validos: una linea de 5 campos sigue
+cargandose con sus valores por defecto.
+
+| Funcion | Retorno |
+|---|---|
+| `fecha_valida(texto)` | `True` si es una fecha real `AAAA-MM-DD` |
+| `revisar_expediente(expediente)` | lista de motivos; vacia si esta integro |
+| `revisar_lista(expedientes)` | tupla `(validos, rechazos)`, cada rechazo `{"codigo", "motivo"}` |
+| `resumir_rechazos(rechazos)` | texto corto con los codigos omitidos y su motivo |
+
+`persistencia.cargar_con_informe(ruta)` retorna `(expedientes, rechazos)` y
+`cargar_desde_archivo()` sigue devolviendo solo la lista de expedientes
+integros, asi que la ventana y las pruebas anteriores no cambian. La consola
+avisa al iniciar:
+
+```
+Expedientes cargados: 2
+Se omitieron 4 expedientes con datos invalidos: EXP-0002 (dni invalido); ...
+```
 
 ## Almacenamiento: texto o SQLite
 
@@ -264,6 +299,7 @@ python -m unittest discover -s tests -v
 | `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, y `generar_codigo` (mayor + 1, cuatro digitos) |
 | `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos y error al guardar |
 | `tests/test_persistencia_db.py` | SQLite: creacion de tablas, guardar y cargar con historial en orden, nombres con apostrofe (`O'Brien`), borrado del historial, base inexistente, `migrar_txt_a_db` y migracion automatica en modo `"sqlite"` |
+| `tests/test_integridad.py`    | Rutina de integridad: fechas reales y formatos invalidos, DNI de 8 digitos, nombre y asunto vacios, estado y dependencia fuera del catalogo, historial invalido, codigo repetido, resumen de rechazos y carga real de un archivo con lineas corruptas |
 
 Cada prueba trabaja en una **carpeta temporal** (`tempfile.TemporaryDirectory()`) que se
 crea en `setUp` y se borra en `tearDown`: las pruebas nunca tocan los `expedientes.txt`,

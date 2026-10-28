@@ -7,6 +7,7 @@ si los datos van al archivo de texto o a la base de datos SQLite.
 
 import os
 
+import integridad
 import persistencia_db
 from expediente import crear_expediente, historial_a_texto, texto_a_historial
 
@@ -22,7 +23,7 @@ SEPARADOR = "|"
 
 
 def cargar_desde_txt(ruta=RUTA_ARCHIVO):
-    """Lee el archivo de texto y retorna la lista de expedientes reconstruidos.
+    """Lee el archivo de texto y retorna la lista de expedientes integros.
 
     Acepta dos formatos de linea:
     - 8 campos: codigo|nombre|dni|asunto|fecha|estado|dependencia|historial
@@ -31,8 +32,21 @@ def cargar_desde_txt(ruta=RUTA_ARCHIVO):
     Si el archivo no existe o no se puede leer, retorna una lista vacia.
     Las lineas vacias o mal formadas se saltan sin detener el programa, y un
     caracter ilegible se reemplaza (errors="replace") para no perder el resto.
+    Cada expediente pasa ademas por la revision de integridad.
+    """
+    expedientes, rechazos = cargar_txt_con_informe(ruta)
+    return expedientes
+
+
+def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
+    """Lee el archivo y retorna (expedientes integros, rechazos).
+
+    Cada rechazo es {"codigo", "motivo"}: lineas con otro numero de campos o
+    expedientes que no pasan la revision de integridad.py (dni, fecha, estado,
+    dependencia, campos vacios o codigo repetido).
     """
     expedientes = []
+    rechazos = []
     try:
         with open(ruta, "r", encoding="utf-8", errors="replace") as archivo:
             for linea in archivo:
@@ -48,9 +62,14 @@ def cargar_desde_txt(ruta=RUTA_ARCHIVO):
                 elif len(campos) == 5:
                     codigo, nombre, dni, asunto, fecha = campos
                     expedientes.append(crear_expediente(codigo, nombre, dni, asunto, fecha))
+                else:
+                    rechazos.append({"codigo": campos[0],
+                                     "motivo": "campos incompletos"})
     except OSError:
-        return []
-    return expedientes
+        return [], []
+    validos, invalidos = integridad.revisar_lista(expedientes)
+    rechazos.extend(invalidos)
+    return validos, rechazos
 
 
 def guardar_en_txt(expedientes, ruta=RUTA_ARCHIVO):
@@ -85,11 +104,21 @@ def cargar_desde_archivo(ruta=RUTA_ARCHIVO):
       existe y el archivo de texto ruta si, primero migra el texto a la base.
     Retorna la lista de expedientes (vacia si no hay datos o no se pueden leer).
     """
+    expedientes, rechazos = cargar_con_informe(ruta)
+    return expedientes
+
+
+def cargar_con_informe(ruta=RUTA_ARCHIVO):
+    """Carga y retorna (expedientes, rechazos) del almacenamiento configurado.
+
+    Con "txt" revisa la integridad de cada linea; con "sqlite" la base ya
+    garantiza las columnas, asi que no hay rechazos que informar.
+    """
     if ALMACENAMIENTO == "sqlite":
         if not os.path.exists(persistencia_db.RUTA_DB) and os.path.exists(ruta):
             persistencia_db.migrar_txt_a_db(ruta)
-        return persistencia_db.cargar_desde_db()
-    return cargar_desde_txt(ruta)
+        return persistencia_db.cargar_desde_db(), []
+    return cargar_txt_con_informe(ruta)
 
 
 def guardar_en_archivo(expedientes, ruta=RUTA_ARCHIVO):
