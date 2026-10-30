@@ -8,9 +8,10 @@ Ejecucion: python gui.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+import integridad
 from autenticacion import verificar_login
 from expediente import DEPENDENCIAS
-from persistencia import cargar_desde_archivo, guardar_en_archivo
+from persistencia import cargar_con_informe, guardar_en_archivo
 from procesamiento import buscar_posicion
 from registro import preparar_datos, crear_registro, aplicar_modificacion
 
@@ -269,12 +270,14 @@ def crear_ventana_principal(ventana, usuario, rol):
 
     A la izquierda van los botones del menu y a la derecha area_contenido,
     donde se muestra cada vista. Al salir (boton o X) guarda los expedientes.
+    Si al cargar habia expedientes con datos invalidos, avisa con un mensaje:
+    se conservan en la lista para que se puedan corregir.
     Retorna area_contenido.
     """
     ventana.title(TITULO)
     ventana.resizable(True, True)
     ventana.geometry("900x500")
-    expedientes = cargar_desde_archivo()
+    expedientes, rechazos = cargar_con_informe()
 
     encabezado = ttk.Frame(ventana, padding=(10, 8))
     encabezado.pack(side="top", fill="x")
@@ -338,6 +341,8 @@ def crear_ventana_principal(ventana, usuario, rol):
     ttk.Label(area_contenido, text="Bienvenido, " + usuario + ". Expedientes cargados: "
               + str(len(expedientes)) + ".").pack(anchor="nw")
     ttk.Label(area_contenido, text="Elija una opcion del menu de la izquierda.").pack(anchor="nw")
+    if rechazos:
+        messagebox.showwarning("Integridad", integridad.resumir_rechazos(rechazos))
     return area_contenido
 
 

@@ -13,7 +13,7 @@ validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriorme
 | `expediente.py`    | Estructura del expediente y generacion de codigos correlativos       |
 | `persistencia.py`  | Punto de entrada para guardar y cargar: elige texto o SQLite         |
 | `persistencia_db.py` | Lectura y escritura en la base SQLite `mesa_partes.db`           |
-| `integridad.py`    | Revision de los datos leidos del archivo antes de aceptarlos          |
+| `integridad.py`    | Revision de los datos leidos del archivo (avisa sin descartar)        |
 | `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
 | `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
 | `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
@@ -63,8 +63,10 @@ y se guardan con 8 campos la proxima vez.
 
 ## Validacion de integridad al cargar
 
-`integridad.py` revisa cada expediente reconstruido antes de aceptarlo. Un
-expediente se omite (no se borra del archivo: se salta al cargar) si:
+`integridad.py` revisa cada expediente reconstruido. Si un expediente tiene
+problemas se **conserva** en la lista y se informa el motivo: descartarlo haria
+que el siguiente guardado lo borre del archivo, porque `guardar_en_txt()`
+sobrescribe el archivo completo. Se reporta cuando:
 
 - el codigo no tiene la forma `EXP-####`;
 - el nombre o el asunto estan vacios o contienen el separador `|`;
@@ -76,24 +78,31 @@ expediente se omite (no se borra del archivo: se salta al cargar) si:
 - el codigo ya aparecio en una linea anterior (codigo repetido).
 
 La revision deja intactos los formatos validos: una linea de 5 campos sigue
-cargandose con sus valores por defecto.
+cargandose con sus valores por defecto. La lectura usa `encoding="utf-8-sig"`
+para aceptar el archivo con y sin BOM: el BOM pegado al primer codigo lo sacaba
+de formato y ese expediente se perdia al guardar.
 
 | Funcion | Retorno |
 |---|---|
 | `fecha_valida(texto)` | `True` si es una fecha real `AAAA-MM-DD` |
 | `revisar_expediente(expediente)` | lista de motivos; vacia si esta integro |
 | `revisar_lista(expedientes)` | tupla `(validos, rechazos)`, cada rechazo `{"codigo", "motivo"}` |
-| `resumir_rechazos(rechazos)` | texto corto con los codigos omitidos y su motivo |
+| `resumir_rechazos(rechazos)` | texto corto con los codigos a corregir y su motivo |
 
-`persistencia.cargar_con_informe(ruta)` retorna `(expedientes, rechazos)` y
-`cargar_desde_archivo()` sigue devolviendo solo la lista de expedientes
-integros, asi que la ventana y las pruebas anteriores no cambian. La consola
-avisa al iniciar:
+`persistencia.cargar_con_informe(ruta)` retorna `(expedientes, rechazos)` con
+**todos** los expedientes leidos; `cargar_desde_archivo()` tambien devuelve la
+lista completa, asi que la ventana y las pruebas anteriores no cambian. La
+consola y la ventana avisan al iniciar:
 
 ```
-Expedientes cargados: 2
-Se omitieron 4 expedientes con datos invalidos: EXP-0002 (dni invalido); ...
+Expedientes cargados: 6
+4 expedientes tienen datos invalidos y deben corregirse: EXP-0002 (dni invalido); ...
 ```
+
+El aviso es informativo: el expediente sigue en la lista y se puede corregir
+con la opcion Modificar o con la ventana. Solo las lineas que no se pueden
+convertir en expediente (otro numero de campos) se saltan, y desde la version
+1.0 se saltaban igual.
 
 ## Almacenamiento: texto o SQLite
 

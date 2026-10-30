@@ -23,7 +23,7 @@ SEPARADOR = "|"
 
 
 def cargar_desde_txt(ruta=RUTA_ARCHIVO):
-    """Lee el archivo de texto y retorna la lista de expedientes integros.
+    """Lee el archivo de texto y retorna todos los expedientes leidos.
 
     Acepta dos formatos de linea:
     - 8 campos: codigo|nombre|dni|asunto|fecha|estado|dependencia|historial
@@ -32,15 +32,19 @@ def cargar_desde_txt(ruta=RUTA_ARCHIVO):
     Si el archivo no existe o no se puede leer, retorna una lista vacia.
     Las lineas vacias o mal formadas se saltan sin detener el programa, y un
     caracter ilegible se reemplaza (errors="replace") para no perder el resto.
-    Cada expediente pasa ademas por la revision de integridad.
+    Los expedientes que no pasan la revision de integridad se retornan igual:
+    descartarlos haria que el siguiente guardado los borre del archivo.
     """
     expedientes, rechazos = cargar_txt_con_informe(ruta)
     return expedientes
 
 
 def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
-    """Lee el archivo y retorna (expedientes integros, rechazos).
+    """Lee el archivo y retorna (expedientes, rechazos).
 
+    Retorna todos los expedientes leidos, incluidos los que tienen problemas
+    de integridad, para avisar sin perder datos: guardar_en_txt() sobrescribe
+    el archivo completo, asi que devolver solo los integros borraria los demas.
     Cada rechazo es {"codigo", "motivo"}: lineas con otro numero de campos o
     expedientes que no pasan la revision de integridad.py (dni, fecha, estado,
     dependencia, campos vacios o codigo repetido).
@@ -48,7 +52,9 @@ def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
     expedientes = []
     rechazos = []
     try:
-        with open(ruta, "r", encoding="utf-8", errors="replace") as archivo:
+        # utf-8-sig acepta el archivo con y sin BOM: el BOM pegado al primer
+        # codigo lo sacaba de formato y el expediente se perdia al guardar.
+        with open(ruta, "r", encoding="utf-8-sig", errors="replace") as archivo:
             for linea in archivo:
                 linea = linea.strip()
                 if linea == "":
@@ -67,9 +73,9 @@ def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
                                      "motivo": "campos incompletos"})
     except OSError:
         return [], []
-    validos, invalidos = integridad.revisar_lista(expedientes)
+    invalidos = integridad.revisar_lista(expedientes)[1]
     rechazos.extend(invalidos)
-    return validos, rechazos
+    return expedientes, rechazos
 
 
 def guardar_en_txt(expedientes, ruta=RUTA_ARCHIVO):
