@@ -242,6 +242,10 @@ python gui.py
 - **Registrar:** formulario con Nombre, DNI, Asunto y una lista de solo lectura con las
   dependencias. Usa `preparar_datos()` y `crear_registro()` de `registro.py`, las mismas
   funciones que la consola.
+- **Listar / Buscar:** dibuja la tabla de expedientes (`gui_tabla.py`) dentro de
+  `area_contenido`: buscador por nombre o asunto, orden por codigo, nombre, DNI, asunto o
+  fecha, y doble clic para abrir el detalle. Solo el rol `administrador` ve el boton
+  "Eliminar", que usa `eliminar_por_codigo()` y guarda el archivo.
 - **Ver expediente:** campo Codigo y boton "Buscar" (el codigo se pasa a mayusculas, asi
   `exp-0001` tambien sirve). Muestra los datos del expediente (codigo, nombre, DNI, asunto,
   fecha, estado y dependencia) y su **historial** en una tabla de solo lectura con las columnas
@@ -292,7 +296,12 @@ Lo que se espera de `mostrar_tabla`:
       gui.mostrar_detalle(contenedor, expedientes, codigo, usuario, rol)
   ```
 
-Mientras `gui_tabla.py` no exista, el boton muestra "Tabla de expedientes: en desarrollo (tarea 13)".
+`gui_tabla.py` implementa ese contrato con `mostrar_tabla()`. Las filas se arman con
+`construir_matriz()`, la busqueda usa `buscar_por_texto()` y el orden usa
+`ordenar_con_burbuja()`: la ventana no repite ninguna regla de la consola.
+
+`preparar_filas(expedientes, texto, campo)` devuelve `(filas, aviso)` y se puede probar sin
+abrir ventanas: `aviso` es `None` (todo bien), `"Busqueda invalida"` o `"Sin coincidencias"`.
 
 ## Pruebas automaticas
 
@@ -309,6 +318,7 @@ python -m unittest discover -s tests -v
 | `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos y error al guardar |
 | `tests/test_persistencia_db.py` | SQLite: creacion de tablas, guardar y cargar con historial en orden, nombres con apostrofe (`O'Brien`), borrado del historial, base inexistente, `migrar_txt_a_db` y migracion automatica en modo `"sqlite"` |
 | `tests/test_integridad.py`    | Rutina de integridad: fechas reales y formatos invalidos, DNI de 8 digitos, nombre y asunto vacios, estado y dependencia fuera del catalogo, historial invalido, codigo repetido, resumen de rechazos y carga real de un archivo con lineas corruptas |
+| `tests/test_gui_tabla.py`     | Tabla de expedientes: filas y avisos de `preparar_filas()`, busqueda, orden, eliminacion segun el rol, doble clic y apertura del detalle |
 
 Cada prueba trabaja en una **carpeta temporal** (`tempfile.TemporaryDirectory()`) que se
 crea en `setUp` y se borra en `tearDown`: las pruebas nunca tocan los `expedientes.txt`,
