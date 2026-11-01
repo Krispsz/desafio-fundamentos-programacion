@@ -57,6 +57,10 @@ EXP-0001|Juan Perez|12345678|Tramite X|2026-10-22|Recibido|Licencias|2026-10-22,
 - `historial`: entradas `fecha,estado,usuario` separadas por `;`
   (ej. `2026-10-22,Recibido,admin;2026-10-23,En proceso,jmesa`).
 
+Cada cambio de estado agrega una entrada al historial con la fecha del cambio y el usuario
+que lo hizo. Las entradas anteriores se conservan y quedan en orden cronologico
+(`expediente.agregar_entrada()`).
+
 El programa tambien lee el formato anterior de 5 campos (`codigo|nombre|dni|asunto|fecha`):
 esos expedientes quedan como `Recibido`, en `Mesa de Partes`, con historial a nombre de `sistema`,
 y se guardan con 8 campos la proxima vez.
@@ -215,9 +219,10 @@ Menu principal:
 5. Eliminar expediente
 6. Ordenar expedientes (codigo, nombre, dni, asunto o fecha) y mostrarlos en tabla
 7. Listar expedientes en tabla
-8. Salir (guarda en el almacenamiento configurado: `expedientes.txt` o `mesa_partes.db`)
+8. Cambiar estado de un expediente (Recibido, En proceso o Atendido; agrega la entrada al historial)
+9. Salir (guarda en el almacenamiento configurado: `expedientes.txt` o `mesa_partes.db`)
 
-Las opciones 2 a 7 avisan "No hay expedientes registrados." si la lista esta vacia.
+Las opciones 2 a 8 avisan "No hay expedientes registrados." si la lista esta vacia.
 
 Los listados se muestran como tabla alineada a partir de un **arreglo bidimensional**
 (lista de listas): la fila 0 son los encabezados y cada fila siguiente es un expediente.
@@ -252,8 +257,11 @@ python gui.py
   Fecha, Estado y Usuario, en el orden guardado. Si el codigo no existe muestra
   "Expediente no encontrado". La vista la dibuja `mostrar_detalle(contenedor, expedientes,
   codigo, usuario, rol)`, que tambien puede llamar la tabla de expedientes.
+- **Cambiar estado:** en el detalle, una lista con los estados y el boton "Cambiar estado".
+  Usa `cambiar_estado()` de `registro.py`: valida el estado, lo actualiza, agrega la entrada
+  al historial y guarda. Si el estado elegido ya era el actual, avisa y no duplica la entrada.
 - **Modificar:** desde el detalle, el boton "Modificar" abre un formulario con Nombre, DNI y
-  Asunto ya llenos; estado y dependencia solo se muestran (se cambian en otra tarea).
+  Asunto ya llenos; la dependencia solo se muestra (el estado se cambia desde el detalle).
   "Guardar cambios" usa `preparar_datos()` y `aplicar_modificacion()` de `registro.py`
   (a traves de `procesar_modificacion()`), que conservan fecha, estado, dependencia e
   historial. "Cancelar" vuelve al detalle sin cambiar nada.
@@ -314,11 +322,12 @@ python -m unittest discover -s tests -v
 
 | Archivo                       | Que cubre                                                       |
 |-------------------------------|-----------------------------------------------------------------|
-| `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, y `generar_codigo` (mayor + 1, cuatro digitos) |
+| `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, `agregar_entrada` (orden cronologico, conserva lo anterior y valida), y `generar_codigo` (mayor + 1, cuatro digitos) |
 | `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos y error al guardar |
 | `tests/test_persistencia_db.py` | SQLite: creacion de tablas, guardar y cargar con historial en orden, nombres con apostrofe (`O'Brien`), borrado del historial, base inexistente, `migrar_txt_a_db` y migracion automatica en modo `"sqlite"` |
 | `tests/test_integridad.py`    | Rutina de integridad: fechas reales y formatos invalidos, DNI de 8 digitos, nombre y asunto vacios, estado y dependencia fuera del catalogo, historial invalido, codigo repetido, resumen de rechazos y carga real de un archivo con lineas corruptas |
 | `tests/test_gui_tabla.py`     | Tabla de expedientes: filas y avisos de `preparar_filas()`, busqueda, orden, eliminacion segun el rol, doble clic y apertura del detalle |
+| `tests/test_cambio_estado.py` | `cambiar_estado()`: estado e historial, conserva las entradas previas, mismo estado, codigo inexistente, estado invalido, usuario vacio, integridad, y el selector de estado del detalle en la GUI |
 
 Cada prueba trabaja en una **carpeta temporal** (`tempfile.TemporaryDirectory()`) que se
 crea en `setUp` y se borra en `tearDown`: las pruebas nunca tocan los `expedientes.txt`,

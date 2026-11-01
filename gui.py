@@ -10,10 +10,11 @@ from tkinter import ttk, messagebox
 
 import integridad
 from autenticacion import verificar_login
-from expediente import DEPENDENCIAS
+from expediente import DEPENDENCIAS, ESTADOS
 from persistencia import cargar_con_informe, guardar_en_archivo
 from procesamiento import buscar_posicion
-from registro import preparar_datos, crear_registro, aplicar_modificacion
+from registro import (preparar_datos, crear_registro, aplicar_modificacion,
+                      cambiar_estado)
 
 # La tabla de expedientes (tarea 13) va en gui_tabla.py. Si el archivo no se
 # puede importar, el boton "Listar / Buscar" muestra un aviso.
@@ -191,6 +192,30 @@ def mostrar_detalle(contenedor, expedientes, codigo, usuario, rol):
                                                     entrada["usuario"]))
     tabla_historial.grid(row=fila + 1, column=0, columnspan=2, sticky="w")
 
+    cambio = ttk.Frame(contenedor)
+    cambio.grid(row=fila + 2, column=0, columnspan=2, sticky="w", pady=(10, 0))
+    ttk.Label(cambio, text="Cambiar estado:").pack(side="left")
+    combo_estado = ttk.Combobox(cambio, values=ESTADOS, state="readonly", width=15)
+    combo_estado.set(expediente["estado"])
+    combo_estado.pack(side="left", padx=5)
+
+    def cambiar():
+        """Aplica el estado elegido, guarda y vuelve a dibujar el detalle."""
+        nuevo_estado = combo_estado.get()
+        if nuevo_estado == expediente["estado"]:
+            messagebox.showinfo("Cambiar estado", "El expediente ya esta en ese estado.")
+            return
+        modifico, guardado = cambiar_estado(expedientes, codigo, nuevo_estado, usuario)
+        if not modifico:
+            messagebox.showwarning("Cambiar estado", "No se pudo cambiar el estado.")
+            return
+        if not guardado:
+            messagebox.showerror("Error", "El estado cambio pero no se pudo guardar.")
+        limpiar(contenedor)
+        mostrar_detalle(contenedor, expedientes, codigo, usuario, rol)
+
+    ttk.Button(cambio, text="Cambiar estado", command=cambiar).pack(side="left")
+
 
 def procesar_modificacion(expedientes, codigo, nombre, dni, asunto):
     """Valida con preparar_datos() y modifica el expediente con aplicar_modificacion().
@@ -208,8 +233,9 @@ def mostrar_formulario_modificacion(contenedor, expedientes, codigo, usuario, ro
     """Dibuja dentro de contenedor (ya vacio) el formulario para modificar un expediente.
 
     Nombre, DNI y Asunto vienen llenos con los datos actuales; estado y
-    dependencia solo se muestran (se cambian en otra vista). "Guardar cambios"
-    usa procesar_modificacion() y "Cancelar" vuelve al detalle sin cambiar nada.
+    dependencia solo se muestran (el estado se cambia desde el detalle).
+    "Guardar cambios" usa procesar_modificacion() y "Cancelar" vuelve al
+    detalle sin cambiar nada.
     """
     posicion = buscar_posicion(expedientes, codigo)
     if posicion is None:

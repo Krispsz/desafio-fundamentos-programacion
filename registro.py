@@ -1,6 +1,7 @@
 from datetime import date
 
-from expediente import crear_expediente, generar_codigo, DEPENDENCIAS
+from expediente import (agregar_entrada, crear_expediente, generar_codigo,
+                        DEPENDENCIAS, ESTADOS)
 from persistencia import guardar_en_archivo
 from validaciones import validar_datos, normalizar_texto
 from procesamiento import buscar_posicion
@@ -46,6 +47,29 @@ def aplicar_modificacion(expedientes, codigo, nombre, dni, asunto):
     expedientes[pos] = crear_expediente(codigo, nombre, dni, asunto, original["fecha"],
                                         original["estado"], original["dependencia"],
                                         original["historial"])
+    guardado = guardar_en_archivo(expedientes)
+    return True, guardado
+
+
+def cambiar_estado(expedientes, codigo, nuevo_estado, usuario):
+    """Cambia el estado del expediente y lo agrega al historial.
+
+    Valida el estado contra ESTADOS y guarda la entrada con la fecha de hoy y el
+    usuario que hizo el cambio. Retorna (cambio, guardado): cambio es False si
+    el codigo no existe, si el estado no es valido o si ya era el estado actual.
+    """
+    if nuevo_estado not in ESTADOS:
+        return False, False
+    posicion = buscar_posicion(expedientes, codigo)
+    if posicion is None:
+        return False, False
+    expediente = expedientes[posicion]
+    if expediente["estado"] == nuevo_estado:
+        return False, False
+    fecha = date.today().isoformat()
+    if not agregar_entrada(expediente["historial"], fecha, nuevo_estado, usuario):
+        return False, False
+    expediente["estado"] = nuevo_estado
     guardado = guardar_en_archivo(expedientes)
     return True, guardado
 
@@ -105,3 +129,32 @@ def modificar_expediente(expedientes):
             print("No se pudo guardar en expedientes.txt. Revise el archivo.")
     else:
         print("Expediente no encontrado.")
+
+
+def cambiar_estado_expediente(expedientes, usuario):
+    """Pide el codigo y el nuevo estado, y aplica el cambio con cambiar_estado()."""
+    codigo = input("Codigo del expediente: ").strip()
+    posicion = buscar_posicion(expedientes, codigo)
+    if posicion is None:
+        print("Expediente no encontrado.")
+        return
+    expediente = expedientes[posicion]
+    print("Estado actual: " + expediente["estado"])
+    for i in range(len(ESTADOS)):
+        print("  " + str(i + 1) + ". " + ESTADOS[i])
+    while True:
+        opcion = input("Nuevo estado (1-" + str(len(ESTADOS)) + "): ").strip()
+        if opcion.isdigit() and 1 <= int(opcion) <= len(ESTADOS):
+            nuevo_estado = ESTADOS[int(opcion) - 1]
+            break
+        print("Opcion invalida, intente de nuevo.")
+    if nuevo_estado == expediente["estado"]:
+        print("El expediente ya esta en ese estado.")
+        return
+    cambio, guardado = cambiar_estado(expedientes, codigo, nuevo_estado, usuario)
+    if not cambio:
+        print("No se pudo cambiar el estado.")
+    else:
+        print("Estado cambiado a " + nuevo_estado + ".")
+        if not guardado:
+            print("No se pudo guardar en expedientes.txt. Revise el archivo.")

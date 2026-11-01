@@ -8,7 +8,8 @@ import getpass
 import integridad
 from autenticacion import verificar_login
 from persistencia import cargar_con_informe, guardar_en_archivo
-from registro import registrar_expediente, modificar_expediente
+from registro import (registrar_expediente, modificar_expediente,
+                      cambiar_estado_expediente)
 from procesamiento import (buscar_expediente, buscar_textual, ordenar_expedientes,
                            eliminar_expediente, listar_expedientes)
 
@@ -45,7 +46,8 @@ def mostrar_menu():
     print("5. Eliminar expediente")
     print("6. Ordenar expedientes")
     print("7. Listar expedientes")
-    print("8. Salir")
+    print("8. Cambiar estado de un expediente")
+    print("9. Salir")
 
 def main():
     """Inicia sesion, carga los expedientes, ejecuta el menu y guarda al salir."""
@@ -64,7 +66,7 @@ def main():
         opcion = input("Elige una opcion: ").strip()
         if opcion == "1":
             registrar_expediente(expedientes, usuario)
-        elif opcion in ("2", "3", "4", "5", "6", "7") and len(expedientes) == 0:
+        elif opcion in ("2", "3", "4", "5", "6", "7", "8") and len(expedientes) == 0:
             print("No hay expedientes registrados.")
         elif opcion == "2":
             buscar_expediente(expedientes)
@@ -81,6 +83,8 @@ def main():
         elif opcion == "7":
             listar_expedientes(expedientes)
         elif opcion == "8":
+            cambiar_estado_expediente(expedientes, usuario)
+        elif opcion == "9":
             salir = True
         else:
             print("Opcion invalida, intenta de nuevo.")
