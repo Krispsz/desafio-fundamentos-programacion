@@ -15,8 +15,8 @@ from persistencia import cargar_con_informe, guardar_en_archivo
 from procesamiento import buscar_posicion
 from registro import preparar_datos, crear_registro, aplicar_modificacion
 
-# La tabla de expedientes (tarea 13) va en gui_tabla.py. Mientras no exista,
-# el boton "Listar / Buscar" muestra un aviso.
+# La tabla de expedientes (tarea 13) va en gui_tabla.py. Si el archivo no se
+# puede importar, el boton "Listar / Buscar" muestra un aviso.
 try:
     from gui_tabla import mostrar_tabla
 except ImportError:
