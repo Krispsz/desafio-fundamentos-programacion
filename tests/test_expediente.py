@@ -2,7 +2,9 @@
 
 import unittest
 
-from expediente import crear_expediente, historial_a_texto, texto_a_historial, generar_codigo
+import integridad
+from expediente import (agregar_entrada, crear_expediente, fecha_valida,
+                        generar_codigo, historial_a_texto, texto_a_historial)
 
 
 class PruebasCrearExpediente(unittest.TestCase):
@@ -45,6 +47,55 @@ class PruebasHistorial(unittest.TestCase):
         historial = texto_a_historial("2026-10-22,Recibido;2026-10-23,En proceso,jmesa")
         self.assertEqual(historial,
                          [{"fecha": "2026-10-23", "estado": "En proceso", "usuario": "jmesa"}])
+
+
+class PruebasAgregarEntrada(unittest.TestCase):
+    """agregar_entrada conserva lo anterior, ordena por fecha y valida."""
+
+    def setUp(self):
+        self.historial = [
+            {"fecha": "2026-10-20", "estado": "Recibido", "usuario": "admin"},
+            {"fecha": "2026-10-22", "estado": "En proceso", "usuario": "jmesa"},
+        ]
+
+    def test_agrega_al_final_y_conserva_las_anteriores(self):
+        self.assertTrue(agregar_entrada(self.historial, "2026-10-25", "Atendido", "admin"))
+        self.assertEqual(len(self.historial), 3)
+        self.assertEqual(self.historial[2],
+                         {"fecha": "2026-10-25", "estado": "Atendido", "usuario": "admin"})
+        self.assertEqual(self.historial[0]["estado"], "Recibido")
+
+    def test_inserta_en_orden_si_la_fecha_es_anterior(self):
+        self.assertTrue(agregar_entrada(self.historial, "2026-10-21", "En proceso", "jmesa"))
+        self.assertEqual([entrada["fecha"] for entrada in self.historial],
+                         ["2026-10-20", "2026-10-21", "2026-10-22"])
+
+    def test_misma_fecha_queda_despues_para_conservar_el_orden(self):
+        self.assertTrue(agregar_entrada(self.historial, "2026-10-22", "Atendido", "admin"))
+        self.assertEqual([entrada["estado"] for entrada in self.historial],
+                         ["Recibido", "En proceso", "Atendido"])
+
+    def test_estado_desconocido_no_modifica_el_historial(self):
+        self.assertFalse(agregar_entrada(self.historial, "2026-10-25", "Volando", "admin"))
+        self.assertEqual(len(self.historial), 2)
+
+    def test_fecha_invalida_no_modifica_el_historial(self):
+        self.assertFalse(agregar_entrada(self.historial, "2026-02-30", "Atendido", "admin"))
+        self.assertEqual(len(self.historial), 2)
+
+    def test_usuario_vacio_o_en_blanco_no_modifica_el_historial(self):
+        self.assertFalse(agregar_entrada(self.historial, "2026-10-25", "Atendido", ""))
+        self.assertFalse(agregar_entrada(self.historial, "2026-10-25", "Atendido", "   "))
+        self.assertEqual(len(self.historial), 2)
+
+    def test_historial_que_no_es_lista_retorna_false(self):
+        self.assertFalse(agregar_entrada("2026-10-20,Recibido,admin", "2026-10-25",
+                                         "Atendido", "admin"))
+
+    def test_la_entrada_agregada_pasa_la_revision_de_integridad(self):
+        agregar_entrada(self.historial, "2026-10-25", "Atendido", "admin")
+        self.assertEqual(integridad.revisar_historial(self.historial), [])
+        self.assertTrue(fecha_valida("2026-10-25"))
 
 
 class PruebasGenerarCodigo(unittest.TestCase):

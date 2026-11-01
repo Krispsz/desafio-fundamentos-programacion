@@ -6,25 +6,9 @@ piden datos, para poder reutilizarlas desde la consola, la ventana y las
 pruebas automaticas.
 """
 
-from datetime import date
-
-from expediente import DEPENDENCIAS, ESTADOS
+from expediente import DEPENDENCIAS, ESTADOS, fecha_valida
 
 MAXIMO_DETALLES = 5
-
-
-def fecha_valida(texto):
-    """Retorna True si el texto es una fecha real con formato AAAA-MM-DD."""
-    if len(texto) != 10 or texto[4] != "-" or texto[7] != "-":
-        return False
-    anio, mes, dia = texto[:4], texto[5:7], texto[8:]
-    if not (anio.isdigit() and mes.isdigit() and dia.isdigit()):
-        return False
-    try:
-        date(int(anio), int(mes), int(dia))
-    except ValueError:
-        return False
-    return True
 
 
 def revisar_historial(historial):

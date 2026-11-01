@@ -1,4 +1,6 @@
-"""Estructura del expediente y generacion de codigos correlativos."""
+"""Estructura del expediente, historial y generacion de codigos correlativos."""
+
+from datetime import date
 
 ESTADOS = ["Recibido", "En proceso", "Atendido"]
 
@@ -7,6 +9,20 @@ DEPENDENCIAS = ["Mesa de Partes", "Licencias", "Rentas", "Obras", "Secretaria Ge
 SEPARADOR_HISTORIAL = ";"
 
 SEPARADOR_ENTRADA = ","
+
+
+def fecha_valida(texto):
+    """Retorna True si el texto es una fecha real con formato AAAA-MM-DD."""
+    if len(texto) != 10 or texto[4] != "-" or texto[7] != "-":
+        return False
+    anio, mes, dia = texto[:4], texto[5:7], texto[8:]
+    if not (anio.isdigit() and mes.isdigit() and dia.isdigit()):
+        return False
+    try:
+        date(int(anio), int(mes), int(dia))
+    except ValueError:
+        return False
+    return True
 
 
 def crear_expediente(codigo, nombre, dni, asunto, fecha,
@@ -53,6 +69,30 @@ def texto_a_historial(texto):
         if len(campos) == 3:
             historial.append({"fecha": campos[0], "estado": campos[1], "usuario": campos[2]})
     return historial
+
+
+def agregar_entrada(historial, fecha, estado, usuario):
+    """Agrega una entrada al historial conservando todas las anteriores.
+
+    La entrada se inserta en orden cronologico (por fecha). Si la fecha es la
+    misma que la de la ultima entrada, queda despues para conservar el orden en
+    que ocurrieron los cambios. Retorna True si se agrego y False si algun dato
+    no es valido o el historial no es una lista.
+    """
+    if not isinstance(historial, list):
+        return False
+    if not fecha_valida(fecha) or estado not in ESTADOS:
+        return False
+    if not isinstance(usuario, str) or usuario.strip() == "":
+        return False
+    entrada = {"fecha": fecha, "estado": estado, "usuario": usuario}
+    posicion = len(historial)
+    for i in range(len(historial)):
+        if historial[i].get("fecha", "") > fecha:
+            posicion = i
+            break
+    historial.insert(posicion, entrada)
+    return True
 
 
 def generar_codigo(expedientes):
