@@ -10,7 +10,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 import integridad
-from autenticacion import verificar_login
+from autenticacion import ROLES, crear_cuenta, verificar_login
 from expediente import DEPENDENCIAS, ESTADOS
 from persistencia import cargar_con_informe, guardar_en_archivo
 from procesamiento import buscar_posicion
@@ -143,6 +143,48 @@ def mostrar_formulario_registro(contenedor, expedientes, usuario):
     ttk.Button(contenedor, text="Registrar", command=registrar).grid(
         row=5, column=1, sticky="w", pady=(10, 0))
     entrada_nombre.focus()
+
+
+def mostrar_formulario_usuarios(contenedor):
+    """Dibuja dentro de contenedor el formulario para crear una cuenta.
+
+    El boton "Crear cuenta" usa crear_cuenta() de autenticacion.py: si la
+    cuenta se crea avisa y limpia el formulario; si no, muestra el motivo.
+    """
+    ttk.Label(contenedor, text="Crear usuario", font=("Segoe UI", 12, "bold")).grid(
+        row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+    ttk.Label(contenedor, text="Usuario:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+    entrada_usuario = ttk.Entry(contenedor, width=25)
+    entrada_usuario.grid(row=1, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Contrasena:").grid(row=2, column=0, sticky="e", padx=5, pady=5)
+    entrada_clave = ttk.Entry(contenedor, width=25, show="*")
+    entrada_clave.grid(row=2, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Confirmar contrasena:").grid(row=3, column=0, sticky="e",
+                                                             padx=5, pady=5)
+    entrada_confirmacion = ttk.Entry(contenedor, width=25, show="*")
+    entrada_confirmacion.grid(row=3, column=1, sticky="w", pady=5)
+    ttk.Label(contenedor, text="Rol:").grid(row=4, column=0, sticky="e", padx=5, pady=5)
+    combo_rol = ttk.Combobox(contenedor, values=ROLES, state="readonly", width=22)
+    combo_rol.current(len(ROLES) - 1)
+    combo_rol.grid(row=4, column=1, sticky="w", pady=5)
+
+    def crear():
+        """Lee el formulario, crea la cuenta y muestra el resultado."""
+        creada, mensaje = crear_cuenta(entrada_usuario.get(), entrada_clave.get(),
+                                       entrada_confirmacion.get(), combo_rol.get())
+        if not creada:
+            messagebox.showwarning("Crear usuario", mensaje)
+            return
+        messagebox.showinfo("Crear usuario", mensaje)
+        entrada_usuario.delete(0, tk.END)
+        entrada_clave.delete(0, tk.END)
+        entrada_confirmacion.delete(0, tk.END)
+        combo_rol.current(len(ROLES) - 1)
+        entrada_usuario.focus()
+
+    ttk.Button(contenedor, text="Crear cuenta", command=crear).grid(
+        row=5, column=1, sticky="w", pady=(10, 0))
+    entrada_usuario.focus()
 
 
 def mostrar_detalle(contenedor, expedientes, codigo, usuario, rol):
@@ -353,6 +395,11 @@ def crear_ventana_principal(ventana, usuario, rol):
         entrada_codigo.bind("<Return>", buscar)
         entrada_codigo.focus()
 
+    def ver_usuarios():
+        """Muestra el formulario para crear cuentas (solo administrador)."""
+        limpiar(area_contenido)
+        mostrar_formulario_usuarios(area_contenido)
+
     def salir():
         """Guarda los expedientes, avisa si falla y cierra la ventana."""
         if not guardar_en_archivo(expedientes):
@@ -362,6 +409,8 @@ def crear_ventana_principal(ventana, usuario, rol):
     ttk.Button(menu, text="Registrar", width=18, command=ver_registro).pack(pady=4)
     ttk.Button(menu, text="Listar / Buscar", width=18, command=ver_listado).pack(pady=4)
     ttk.Button(menu, text="Ver expediente", width=18, command=ver_expediente).pack(pady=4)
+    if rol == "administrador":
+        ttk.Button(menu, text="Usuarios", width=18, command=ver_usuarios).pack(pady=4)
     ttk.Button(menu, text="Salir", width=18, command=salir).pack(pady=4)
     ventana.protocol("WM_DELETE_WINDOW", salir)
 
