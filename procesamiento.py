@@ -138,7 +138,7 @@ def listar_expedientes(expedientes):
 
 def buscar_expediente(expedientes):
     """Pide un codigo, usa buscar_posicion() y muestra el resultado."""
-    codigo = input("Ingrese codigo a buscar: ").strip()
+    codigo = input("Ingrese codigo a buscar: ").strip().upper()
     posicion = buscar_posicion(expedientes, codigo)
     if posicion is not None:
         mostrar_expediente(expedientes[posicion])
@@ -175,11 +175,11 @@ def ordenar_expedientes(expedientes, criterio="codigo"):
 
 def eliminar_expediente(expedientes):
     """Pide el codigo y llama a eliminar_por_codigo(); avisa del resultado."""
-    codigo = input("Ingrese el codigo del expediente a eliminar: ").strip()
+    codigo = input("Ingrese el codigo del expediente a eliminar: ").strip().upper()
     eliminado, guardado = eliminar_por_codigo(expedientes, codigo)
     if not eliminado:
         print("Expediente no encontrado")
     else:
         print("Expediente eliminado con exito.")
         if not guardado:
-            print("No se pudo guardar en expedientes.txt. Revise el archivo.")
+            print("No se pudieron guardar los datos.")

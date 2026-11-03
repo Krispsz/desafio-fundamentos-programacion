@@ -141,7 +141,7 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
         if not eliminado:
             avisar("Expediente no encontrado")
         elif not guardado:
-            avisar("No se pudo guardar en expedientes.txt. Revise el archivo.")
+            avisar("No se pudieron guardar los datos.")
         else:
             avisar("Expediente " + codigo + " eliminado.")
 
