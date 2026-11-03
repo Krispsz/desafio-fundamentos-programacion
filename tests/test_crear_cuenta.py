@@ -11,6 +11,7 @@ from unittest import mock
 import persistencia
 from autenticacion import (LONGITUD_MINIMA, ROLES, agregar_usuario, crear_cuenta,
                            leer_usuarios, verificar_login)
+from expediente import agregar_entrada, crear_expediente
 
 try:
     import tkinter as tk
@@ -47,6 +48,39 @@ class PruebasCrearCuenta(unittest.TestCase):
     def test_usuario_con_separador_es_invalido(self):
         self.assertEqual(self.crear("ana|x", "clave01", "clave01", "usuario"),
                          (False, "Usuario invalido"))
+
+    def test_usuario_con_separadores_del_historial_o_espacios_es_invalido(self):
+        for nombre in ("ana,maria", "ana;maria", "ana maria"):
+            self.assertEqual(self.crear(nombre, "clave01", "clave01", "usuario"),
+                             (False, "Usuario invalido"), nombre)
+        self.assertEqual([u["usuario"] for u in leer_usuarios(self.ruta)], ["admin"])
+
+    def test_espacios_en_los_extremos_se_quitan(self):
+        self.assertEqual(self.crear("  ana  ", "clave01", "clave01", "usuario"),
+                         (True, "Cuenta creada"))
+        self.assertEqual(verificar_login("ana", "clave01", self.ruta), (True, "usuario"))
+
+    def test_agregar_usuario_directo_rechaza_coma_y_punto_y_coma(self):
+        self.assertFalse(agregar_usuario("ana,maria", "clave01", "usuario", self.ruta))
+        self.assertFalse(agregar_usuario("ana;maria", "clave01", "usuario", self.ruta))
+        self.assertEqual([u["usuario"] for u in leer_usuarios(self.ruta)], ["admin"])
+
+    def test_historial_de_un_usuario_creado_sobrevive_guardar_y_cargar(self):
+        self.crear("prueba01", "clave01", "clave01", "usuario")
+        valido, rol = verificar_login("prueba01", "clave01", self.ruta)
+        self.assertTrue(valido)
+        historial = [{"fecha": "2026-10-22", "estado": "Recibido", "usuario": "admin"}]
+        self.assertTrue(agregar_entrada(historial, "2026-10-23", "En proceso", "prueba01"))
+        expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
+                                        "2026-10-22", "En proceso", "Licencias",
+                                        historial)]
+        ruta_expedientes = os.path.join(self.carpeta.name, "expedientes.txt")
+        self.assertTrue(persistencia.guardar_en_txt(expedientes, ruta_expedientes))
+        cargados = persistencia.cargar_desde_txt(ruta_expedientes)
+        self.assertEqual(cargados, expedientes)
+        self.assertEqual(cargados[0]["historial"][1],
+                         {"fecha": "2026-10-23", "estado": "En proceso",
+                          "usuario": "prueba01"})
 
     def test_contrasenas_distintas(self):
         self.assertEqual(self.crear("prueba01", "clave01", "clave02", "usuario"),

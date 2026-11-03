@@ -224,11 +224,16 @@ orden y retorna el primer motivo que encuentra:
 
 | Regla | Mensaje si no se cumple |
 |---|---|
-| Usuario no vacio y sin el caracter `\|` | `Usuario invalido` |
+| Usuario no vacio y sin espacios, `\|`, `,` ni `;` (los espacios de los extremos se quitan) | `Usuario invalido` |
 | Contrasena igual a la confirmacion | `Las contrasenas no coinciden` |
 | Contrasena de al menos `LONGITUD_MINIMA` (6) caracteres | `La contrasena debe tener al menos 6 caracteres` |
 | Rol de `ROLES` (`administrador` o `usuario`) | `Rol invalido` |
 | Usuario no registrado (sin distinguir mayusculas) | `El usuario ya existe` |
+
+El nombre no admite `|` porque separa los campos de `usuarios.txt`, ni `,` o `;` porque se
+guarda en el historial de los expedientes (`fecha,estado,usuario`, entradas separadas por
+`;`): un usuario `ana,maria` rompia la entrada y el historial se recargaba vacio.
+`agregar_usuario()` tambien rechaza `,` y `;` por si se llama directo.
 
 Si todo esta bien, la cuenta se guarda con `agregar_usuario()` (sal aleatoria y hash SHA-256,
 nunca la contrasena) y el mensaje es `Cuenta creada`. Si no se puede escribir, el mensaje es
