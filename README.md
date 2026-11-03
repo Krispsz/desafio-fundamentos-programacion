@@ -104,9 +104,33 @@ Expedientes cargados: 6
 ```
 
 El aviso es informativo: el expediente sigue en la lista y se puede corregir
-con la opcion Modificar o con la ventana. Solo las lineas que no se pueden
-convertir en expediente (otro numero de campos) se saltan, y desde la version
-1.0 se saltaban igual.
+con la opcion Modificar o con la ventana. Las lineas que no se pueden
+convertir en expediente (otro numero de campos) no entran en la lista, pero se
+copian a `expedientes_rechazados.txt` para no perderlas (ver "Robustez de los datos").
+
+## Robustez de los datos
+
+- **Ejecucion desde cualquier carpeta:** `python C:\ruta\al\repo\main.py` (o `gui.py`)
+  funciona aunque la terminal este en otra carpeta. Al arrancar como programa, `main.py` y
+  `gui.py` cambian a su propia carpeta con
+  `os.chdir(os.path.dirname(os.path.abspath(__file__)))`, asi encuentran `usuarios.txt` y los
+  datos. Las rutas de los modulos (`RUTA_ARCHIVO`, `RUTA_USUARIOS`, `RUTA_DB`) siguen siendo
+  relativas, y las pruebas las usan en carpetas temporales.
+- **BOM en `usuarios.txt`:** si el archivo se guarda con el Bloc de notas, Windows agrega un
+  BOM al inicio. `leer_usuarios()` abre con `encoding="utf-8-sig"` (igual que
+  `persistencia.py`), asi el primer usuario puede seguir entrando.
+- **Guardado atomico:** `guardar_en_txt()` escribe primero en `expedientes.txt.tmp` y al
+  terminar lo pone en lugar del original con `os.replace()`, que es atomico en Windows y en
+  Linux. Si el guardado falla a mitad, se borra el `.tmp`, la funcion retorna `False` y el
+  archivo original queda intacto.
+- **`expedientes_rechazados.txt`:** cada linea con un numero de campos distinto de 5 u 8 se
+  agrega tal cual al final de este archivo, en la misma carpeta que `expedientes.txt`, y el
+  aviso dice `campos incompletos (copiada a expedientes_rechazados.txt)`. Una linea que ya
+  esta en el archivo no se vuelve a agregar, asi cargar varias veces no lo duplica. La linea
+  se puede corregir a mano y volver a pegar en `expedientes.txt`.
+
+`generar_codigo()` ignora los codigos fuera de formato (por ejemplo `123-ABC`, que la
+integridad conserva): el siguiente codigo sale del mayor `EXP-####` valido.
 
 ## Almacenamiento: texto o SQLite
 
@@ -248,9 +272,11 @@ python gui.py
   dependencias. Usa `preparar_datos()` y `crear_registro()` de `registro.py`, las mismas
   funciones que la consola.
 - **Listar / Buscar:** dibuja la tabla de expedientes (`gui_tabla.py`) dentro de
-  `area_contenido`: buscador por nombre o asunto, orden por codigo, nombre, DNI, asunto o
-  fecha, y doble clic para abrir el detalle. Solo el rol `administrador` ve el boton
-  "Eliminar", que usa `eliminar_por_codigo()` y guarda el archivo.
+  `area_contenido`: buscador por nombre o asunto, boton "Ver todos" (quita el filtro y
+  vuelve a mostrar todas las filas), orden por codigo, nombre, DNI, asunto o fecha, y doble
+  clic para abrir el detalle. Solo el rol `administrador` ve el boton "Eliminar": pide
+  confirmacion (`gui_tabla.confirmar()`) y, si se acepta, usa `eliminar_por_codigo()` y
+  guarda el archivo.
 - **Ver expediente:** campo Codigo y boton "Buscar" (el codigo se pasa a mayusculas, asi
   `exp-0001` tambien sirve). Muestra los datos del expediente (codigo, nombre, DNI, asunto,
   fecha, estado y dependencia) y su **historial** en una tabla de solo lectura con las columnas
@@ -308,6 +334,15 @@ Lo que se espera de `mostrar_tabla`:
 `construir_matriz()`, la busqueda usa `buscar_por_texto()` y el orden usa
 `ordenar_con_burbuja()`: la ventana no repite ninguna regla de la consola.
 
+- "Buscar" con el campo vacio avisa "Busqueda invalida"; para volver a la lista completa
+  esta el boton **"Ver todos"**, que limpia el campo y quita el filtro.
+- "Eliminar" llama antes a `confirmar(codigo)`, una funcion del modulo que pregunta con
+  `messagebox.askyesno()` y retorna `True` o `False`; si retorna `False` no se elimina nada.
+  Las pruebas la reemplazan por una que retorna `True`, asi ninguna abre un cuadro de dialogo.
+- Las filas usan el codigo como identificador (`iid`); si un codigo esta repetido, la segunda
+  fila recibe el identificador que genera Tkinter y la tabla se dibuja igual. Eliminar y el
+  doble clic leen el codigo de la fila con `tabla.set(fila, "codigo")`.
+
 `preparar_filas(expedientes, texto, campo)` devuelve `(filas, aviso)` y se puede probar sin
 abrir ventanas: `aviso` es `None` (todo bien), `"Busqueda invalida"` o `"Sin coincidencias"`.
 
@@ -322,11 +357,12 @@ python -m unittest discover -s tests -v
 
 | Archivo                       | Que cubre                                                       |
 |-------------------------------|-----------------------------------------------------------------|
-| `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, `agregar_entrada` (orden cronologico, conserva lo anterior y valida), y `generar_codigo` (mayor + 1, cuatro digitos) |
-| `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos y error al guardar |
+| `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, `agregar_entrada` (orden cronologico, conserva lo anterior y valida), y `generar_codigo` (mayor + 1, cuatro digitos, ignora codigos fuera de formato) |
+| `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos, error al guardar, guardado atomico (sin `.tmp` y original intacto si falla) y copia sin duplicados a `expedientes_rechazados.txt` |
+| `tests/test_autenticacion_bom.py` | Login con un `usuarios.txt` que empieza con BOM |
 | `tests/test_persistencia_db.py` | SQLite: creacion de tablas, guardar y cargar con historial en orden, nombres con apostrofe (`O'Brien`), borrado del historial, base inexistente, `migrar_txt_a_db` y migracion automatica en modo `"sqlite"` |
 | `tests/test_integridad.py`    | Rutina de integridad: fechas reales y formatos invalidos, DNI de 8 digitos, nombre y asunto vacios, estado y dependencia fuera del catalogo, historial invalido, codigo repetido, resumen de rechazos y carga real de un archivo con lineas corruptas |
-| `tests/test_gui_tabla.py`     | Tabla de expedientes: filas y avisos de `preparar_filas()`, busqueda, orden, eliminacion segun el rol, doble clic y apertura del detalle |
+| `tests/test_gui_tabla.py`     | Tabla de expedientes: filas y avisos de `preparar_filas()`, busqueda, "Ver todos", orden, eliminacion segun el rol y con confirmacion, codigos repetidos, doble clic y apertura del detalle |
 | `tests/test_cambio_estado.py` | `cambiar_estado()`: estado e historial, conserva las entradas previas, mismo estado, codigo inexistente, estado invalido, usuario vacio, integridad, y el selector de estado del detalle en la GUI |
 
 Cada prueba trabaja en una **carpeta temporal** (`tempfile.TemporaryDirectory()`) que se
@@ -348,6 +384,14 @@ Reglas de validacion (se repite la captura hasta que se cumplan):
 
 - Nombre y asunto no vacios y sin el caracter separador `|`.
 - DNI de exactamente 8 digitos numericos.
+
+## Limitaciones conocidas
+
+- **Codigos repetidos en la tabla de la GUI.** Un codigo repetido es un dato invalido que la
+  integridad conserva y avisa al cargar. Con codigos repetidos, "Eliminar" y el doble clic
+  actuan sobre el **primer** expediente con ese codigo (`buscar_posicion()`), no
+  necesariamente sobre la fila seleccionada. Se recomienda corregir el codigo repetido con
+  Modificar antes de eliminar.
 
 ## Equipo
 
