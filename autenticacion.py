@@ -7,6 +7,10 @@ RUTA_USUARIOS = "usuarios.txt"
 
 SEPARADOR = "|"
 
+ROLES = ["administrador", "usuario"]
+
+LONGITUD_MINIMA = 6
+
 
 def hash_contrasena(contrasena, sal):
     """SHA-256 en hexadecimal de sal + contrasena."""
@@ -74,3 +78,27 @@ def agregar_usuario(usuario, contrasena, rol, ruta=RUTA_USUARIOS):
         archivo.write(usuario + SEPARADOR + sal + SEPARADOR
                       + hash_contrasena(contrasena, sal) + SEPARADOR + rol + "\n")
     return True
+
+
+def crear_cuenta(usuario, clave, confirmacion, rol, ruta=RUTA_USUARIOS):
+    """Valida y crea una cuenta. Retorna (creada, mensaje).
+
+    Las reglas se revisan en este orden: usuario no vacio y sin |, clave igual
+    a la confirmacion, clave de al menos LONGITUD_MINIMA caracteres, rol de
+    ROLES y usuario no registrado. Si todo esta bien, la guarda con
+    agregar_usuario() (sal aleatoria y hash, nunca la contrasena).
+    """
+    if usuario.strip() == "" or SEPARADOR in usuario:
+        return False, "Usuario invalido"
+    if clave != confirmacion:
+        return False, "Las contrasenas no coinciden"
+    if len(clave) < LONGITUD_MINIMA:
+        return False, ("La contrasena debe tener al menos " + str(LONGITUD_MINIMA)
+                       + " caracteres")
+    if rol not in ROLES:
+        return False, "Rol invalido"
+    if usuario_existe(usuario, ruta):
+        return False, "El usuario ya existe"
+    if agregar_usuario(usuario, clave, rol, ruta):
+        return True, "Cuenta creada"
+    return False, "No se pudo crear la cuenta"
