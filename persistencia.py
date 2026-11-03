@@ -19,6 +19,10 @@ ALMACENAMIENTO = "txt"
 
 RUTA_ARCHIVO = "expedientes.txt"
 
+# Las lineas que no se pueden leer se copian aqui, en la misma carpeta que el
+# archivo de expedientes, para que el siguiente guardado no las pierda.
+NOMBRE_RECHAZADOS = "expedientes_rechazados.txt"
+
 SEPARADOR = "|"
 
 
@@ -48,9 +52,13 @@ def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
     Cada rechazo es {"codigo", "motivo"}: lineas con otro numero de campos o
     expedientes que no pasan la revision de integridad.py (dni, fecha, estado,
     dependencia, campos vacios o codigo repetido).
+    Las lineas con otro numero de campos no se pueden convertir en expediente:
+    se copian tal cual a expedientes_rechazados.txt (con copiar_rechazadas())
+    para que no se pierdan cuando guardar_en_txt() sobrescriba el archivo.
     """
     expedientes = []
     rechazos = []
+    ilegibles = []
     try:
         # utf-8-sig acepta el archivo con y sin BOM: el BOM pegado al primer
         # codigo lo sacaba de formato y el expediente se perdia al guardar.
@@ -69,13 +77,45 @@ def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
                     codigo, nombre, dni, asunto, fecha = campos
                     expedientes.append(crear_expediente(codigo, nombre, dni, asunto, fecha))
                 else:
+                    ilegibles.append(linea)
                     rechazos.append({"codigo": campos[0],
-                                     "motivo": "campos incompletos"})
+                                     "motivo": "campos incompletos (copiada a "
+                                               + NOMBRE_RECHAZADOS + ")"})
     except OSError:
         return [], []
+    if ilegibles:
+        copiar_rechazadas(ilegibles, ruta)
     invalidos = integridad.revisar_lista(expedientes)[1]
     rechazos.extend(invalidos)
     return expedientes, rechazos
+
+
+def copiar_rechazadas(lineas, ruta=RUTA_ARCHIVO):
+    """Agrega las lineas al final de expedientes_rechazados.txt sin duplicarlas.
+
+    El archivo va en la misma carpeta que ruta. Una linea que ya esta en el
+    archivo no se vuelve a agregar, asi cargar varias veces no lo hace crecer.
+    Retorna True si se pudo escribir y False si hubo un error.
+    """
+    destino = os.path.join(os.path.dirname(ruta), NOMBRE_RECHAZADOS)
+    existentes = []
+    try:
+        with open(destino, "r", encoding="utf-8-sig", errors="replace") as archivo:
+            for linea in archivo:
+                existentes.append(linea.strip())
+    except FileNotFoundError:
+        existentes = []
+    except OSError:
+        return False
+    try:
+        with open(destino, "a", encoding="utf-8") as archivo:
+            for linea in lineas:
+                if linea not in existentes:
+                    archivo.write(linea + "\n")
+                    existentes.append(linea)
+    except OSError:
+        return False
+    return True
 
 
 def guardar_en_txt(expedientes, ruta=RUTA_ARCHIVO):
