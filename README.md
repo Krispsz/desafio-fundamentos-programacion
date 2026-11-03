@@ -399,6 +399,7 @@ python -m unittest discover -s tests -v
 | `tests/test_integridad.py`    | Rutina de integridad: fechas reales y formatos invalidos, DNI de 8 digitos, nombre y asunto vacios, estado y dependencia fuera del catalogo, historial invalido, codigo repetido, resumen de rechazos y carga real de un archivo con lineas corruptas |
 | `tests/test_gui_tabla.py`     | Tabla de expedientes: filas y avisos de `preparar_filas()`, busqueda, "Ver todos", orden, eliminacion segun el rol y con confirmacion, codigos repetidos, doble clic y apertura del detalle |
 | `tests/test_cambio_estado.py` | `cambiar_estado()`: estado e historial, conserva las entradas previas, mismo estado, codigo inexistente, estado invalido, usuario vacio, integridad, y el selector de estado del detalle en la GUI |
+| `tests/test_integracion_consola.py` | Integracion de punta a punta: `main.main()` con `input` y `getpass` simulados (`mock.patch`), menu definitivo (9 = Salir, 10 = Crear usuario), login y bloqueo tras 3 fallos, registro, busqueda, orden, modificacion, cambio de estado, eliminacion, persistencia entre ejecuciones y creacion de usuarios con su rol |
 
 Cada prueba trabaja en una **carpeta temporal** (`tempfile.TemporaryDirectory()`) que se
 crea en `setUp` y se borra en `tearDown`: las pruebas nunca tocan los `expedientes.txt`,
