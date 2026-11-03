@@ -115,6 +115,16 @@ class PruebasGenerarCodigo(unittest.TestCase):
         self.assertEqual(len(codigo[4:]), 4)
         self.assertTrue(codigo[4:].isdigit())
 
+    def test_codigo_fuera_de_formato_se_ignora(self):
+        expedientes = [crear_expediente("EXP-0002", "A", "11111111", "x", "2026-10-22"),
+                       crear_expediente("123-ABC", "B", "22222222", "y", "2026-10-22")]
+        self.assertEqual(generar_codigo(expedientes), "EXP-0003")
+
+    def test_solo_codigos_fuera_de_formato_empieza_en_uno(self):
+        expedientes = [crear_expediente("EXP-", "A", "11111111", "x", "2026-10-22"),
+                       crear_expediente("EXP-00A1", "B", "22222222", "y", "2026-10-22")]
+        self.assertEqual(generar_codigo(expedientes), "EXP-0001")
+
 
 if __name__ == "__main__":
     unittest.main()

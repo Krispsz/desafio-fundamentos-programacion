@@ -17,7 +17,9 @@ def leer_usuarios(ruta=RUTA_USUARIOS):
     """Lista de usuarios leidos de usuarios.txt; vacia si el archivo no existe."""
     usuarios = []
     try:
-        with open(ruta, "r", encoding="utf-8") as archivo:
+        # utf-8-sig acepta el archivo con y sin BOM (el Bloc de notas lo agrega
+        # al guardar); pegado al primer usuario, ese usuario no podia entrar.
+        with open(ruta, "r", encoding="utf-8-sig") as archivo:
             for linea in archivo:
                 linea = linea.strip()
                 if linea == "":

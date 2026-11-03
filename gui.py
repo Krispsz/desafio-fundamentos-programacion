@@ -5,6 +5,7 @@ se reutiliza de los otros modulos, igual que en la version de consola.
 Ejecucion: python gui.py
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -386,4 +387,7 @@ def iniciar_gui():
 
 
 if __name__ == "__main__":
+    # Las rutas de los datos son relativas: se trabaja en la carpeta del
+    # programa para encontrar usuarios.txt aunque se ejecute desde otra.
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     iniciar_gui()

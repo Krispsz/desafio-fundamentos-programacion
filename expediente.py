@@ -99,11 +99,15 @@ def generar_codigo(expedientes):
     """Genera el siguiente codigo correlativo con formato EXP-0001.
 
     Usa el numero mas alto existente + 1 (no la cantidad de expedientes),
-    para no repetir codigos despues de eliminar uno.
+    para no repetir codigos despues de eliminar uno. Los codigos fuera de
+    formato (por ejemplo 123-ABC, que la integridad conserva) se ignoran.
     """
     mayor = 0
     for expediente in expedientes:
-        numero = int(expediente["codigo"][4:])
+        codigo = expediente["codigo"]
+        if not (codigo.startswith("EXP-") and codigo[4:].isdigit()):
+            continue
+        numero = int(codigo[4:])
         if numero > mayor:
             mayor = numero
     return "EXP-" + str(mayor + 1).zfill(4)

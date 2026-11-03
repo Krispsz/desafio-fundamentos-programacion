@@ -8,7 +8,9 @@ env/
 
 # Datos generados en tiempo de ejecucion
 expedientes.txt
+expedientes_rechazados.txt
 *.db
+*.tmp
 
 # Entornos y editores
 .vscode/

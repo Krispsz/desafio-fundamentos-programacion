@@ -6,6 +6,7 @@ Cada prueba trabaja en una carpeta temporal: nunca se toca el expedientes.txt re
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import persistencia
 from expediente import crear_expediente
@@ -71,6 +72,62 @@ class PruebasPersistenciaTexto(unittest.TestCase):
         expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
                                         "2026-10-16")]
         self.assertFalse(persistencia.guardar_en_archivo(expedientes, ruta))
+
+    def test_guardado_correcto_no_deja_archivo_temporal(self):
+        expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
+                                        "2026-10-16")]
+        self.assertTrue(persistencia.guardar_en_archivo(expedientes, self.ruta))
+        self.assertTrue(os.path.exists(self.ruta))
+        self.assertFalse(os.path.exists(self.ruta + ".tmp"))
+        self.assertEqual(os.listdir(self.carpeta.name), ["expedientes.txt"])
+
+    def test_guardado_fallido_conserva_el_archivo_original(self):
+        self.escribir(b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n")
+        expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
+                                        "2026-10-16"),
+                       crear_expediente("EXP-0002", "Maria Lopez", "87654321", "Reclamo",
+                                        "2026-10-17")]
+        with mock.patch("persistencia.historial_a_texto", side_effect=OSError):
+            self.assertFalse(persistencia.guardar_en_archivo(expedientes, self.ruta))
+        with open(self.ruta, "rb") as archivo:
+            self.assertEqual(archivo.read(),
+                             b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n")
+        self.assertFalse(os.path.exists(self.ruta + ".tmp"))
+
+    def leer_rechazados(self):
+        """Contenido de expedientes_rechazados.txt en la carpeta de prueba."""
+        ruta = os.path.join(self.carpeta.name, "expedientes_rechazados.txt")
+        with open(ruta, encoding="utf-8") as archivo:
+            return archivo.read()
+
+    def test_linea_ilegible_se_copia_a_rechazados(self):
+        self.escribir(b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n"
+                      b"EXP-0002|Maria Lopez|87654321\n")
+        expedientes, rechazos = persistencia.cargar_txt_con_informe(self.ruta)
+        self.assertEqual([e["codigo"] for e in expedientes], ["EXP-0001"])
+        self.assertEqual(rechazos, [{"codigo": "EXP-0002",
+                                     "motivo": "campos incompletos (copiada a "
+                                               "expedientes_rechazados.txt)"}])
+        self.assertEqual(self.leer_rechazados(), "EXP-0002|Maria Lopez|87654321\n")
+
+    def test_cargar_dos_veces_no_duplica_la_linea_rechazada(self):
+        self.escribir(b"EXP-0002|Maria Lopez|87654321\n")
+        persistencia.cargar_txt_con_informe(self.ruta)
+        persistencia.cargar_txt_con_informe(self.ruta)
+        self.assertEqual(self.leer_rechazados(), "EXP-0002|Maria Lopez|87654321\n")
+
+    def test_rechazada_sigue_disponible_despues_de_guardar(self):
+        self.escribir(b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n"
+                      b"EXP-0002|Maria Lopez|87654321\n")
+        expedientes = persistencia.cargar_desde_archivo(self.ruta)
+        self.assertTrue(persistencia.guardar_en_archivo(expedientes, self.ruta))
+        self.assertIn("EXP-0002|Maria Lopez|87654321", self.leer_rechazados())
+
+    def test_archivo_sin_lineas_ilegibles_no_crea_rechazados(self):
+        self.escribir(b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n")
+        persistencia.cargar_txt_con_informe(self.ruta)
+        self.assertFalse(os.path.exists(
+            os.path.join(self.carpeta.name, "expedientes_rechazados.txt")))
 
 
 if __name__ == "__main__":
