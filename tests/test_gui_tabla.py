@@ -97,8 +97,12 @@ class PruebasDeVentana(unittest.TestCase):
         self.almacen = persistencia.ALMACENAMIENTO
         persistencia.ALMACENAMIENTO = "txt"
         self.expedientes = datos_de_prueba()
+        # Ninguna prueba debe abrir el cuadro de dialogo de confirmacion
+        self.confirmar_original = gui_tabla.confirmar
+        gui_tabla.confirmar = lambda codigo: True
 
     def tearDown(self):
+        gui_tabla.confirmar = self.confirmar_original
         persistencia.ALMACENAMIENTO = self.almacen
         os.chdir(self.anterior)
         self.carpeta.cleanup()
@@ -173,6 +177,15 @@ class PruebasDeVentana(unittest.TestCase):
         self.assertIn("Expediente EXP-0002 eliminado.", self.etiquetas())
         self.assertEqual(len(persistencia.cargar_desde_archivo()), 2)
 
+    def test_eliminar_cancelado_conserva_el_expediente(self):
+        gui_tabla.confirmar = lambda codigo: False
+        tabla = self.dibujar("administrador")
+        tabla.selection_set("EXP-0002")
+        self.boton("Eliminar").invoke()
+        self.assertEqual(len(self.expedientes), 3)
+        self.assertIn("EXP-0002", tabla.get_children())
+        self.assertFalse(os.path.exists("expedientes.txt"))
+
     def test_codigos_repetidos_no_impiden_dibujar_la_tabla(self):
         self.expedientes.append(crear_expediente("EXP-0002", "Rosa Diaz", "41122334",
                                                  "Duplicado", "2026-10-23"))
@@ -189,6 +202,16 @@ class PruebasDeVentana(unittest.TestCase):
         self.boton("Eliminar").invoke()
         self.assertEqual(len(self.expedientes), 3)
         self.assertIn("Expediente EXP-0002 eliminado.", self.etiquetas())
+
+    def test_ver_todos_quita_el_filtro(self):
+        tabla = self.dibujar("administrador")
+        entrada = self.widgets("Entry")[0]
+        entrada.insert(0, "maria")
+        self.boton("Buscar").invoke()
+        self.assertEqual(tabla.get_children(), ("EXP-0002",))
+        self.boton("Ver todos").invoke()
+        self.assertEqual(len(tabla.get_children()), 3)
+        self.assertEqual(entrada.get(), "")
 
     def test_buscar_filtra_las_filas(self):
         tabla = self.dibujar("administrador")

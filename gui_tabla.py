@@ -6,7 +6,7 @@ usa eliminar_por_codigo() de procesamiento.py. Este modulo solo dibuja.
 """
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from procesamiento import (ENCABEZADOS, buscar_por_texto, construir_matriz,
                            eliminar_por_codigo, ordenar_con_burbuja,
@@ -30,6 +30,11 @@ def preparar_filas(expedientes, texto, campo):
     if len(encontrados) == 0:
         return [], "Sin coincidencias"
     return construir_matriz(encontrados)[1:], None
+
+
+def confirmar(codigo):
+    """Pregunta si se elimina el expediente; retorna True o False."""
+    return messagebox.askyesno("Eliminar", "Eliminar el expediente " + codigo + "?")
 
 
 def abrir_detalle(contenedor, expedientes, codigo, usuario, rol):
@@ -109,6 +114,12 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
         vista["campo"] = campo.get()
         refrescar()
 
+    def ver_todos():
+        """Quita el filtro de busqueda y vuelve a mostrar todas las filas."""
+        entrada.delete(0, tk.END)
+        vista["texto"] = ""
+        refrescar()
+
     def ordenar():
         """Ordena la lista principal en el lugar y redibuja la vista."""
         if ordenar_con_burbuja(expedientes, criterio.get()) is None:
@@ -117,12 +128,14 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
         refrescar()
 
     def eliminar():
-        """Quita el expediente elegido con eliminar_por_codigo() y guarda."""
+        """Pide confirmacion y quita el expediente elegido con eliminar_por_codigo()."""
         seleccion = tabla.selection()
         if len(seleccion) == 0:
             avisar("Seleccione un expediente para eliminar")
             return
         codigo = tabla.set(seleccion[0], "codigo")
+        if not confirmar(codigo):
+            return
         eliminado, guardado = eliminar_por_codigo(expedientes, codigo)
         refrescar()
         if not eliminado:
@@ -141,6 +154,8 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
 
     ttk.Button(barra_busqueda, text="Buscar", command=buscar).pack(side="left",
                                                                    padx=(8, 0))
+    ttk.Button(barra_busqueda, text="Ver todos", command=ver_todos).pack(side="left",
+                                                                         padx=(5, 0))
     ttk.Button(barra_orden, text="Ordenar", command=ordenar).pack(side="left")
     if rol == "administrador":
         ttk.Button(pie, text="Eliminar", command=eliminar).pack(side="right")
