@@ -214,6 +214,25 @@ Las funciones del modulo solo retornan valores, sin `print` ni `input`:
 | `agregar_usuario(usuario, clave, rol)` | `True` si registro, `False` si invalido o ya existia |
 | `hash_contrasena(clave, sal)`    | hash SHA-256 en hexadecimal                |
 | `leer_usuarios()`                | lista de diccionarios `usuario`, `hash`, `rol` |
+| `crear_cuenta(usuario, clave, confirmacion, rol)` | tupla `(creada, mensaje)` |
+
+### Crear usuarios
+
+El administrador crea cuentas desde el programa: opcion **10** de la consola o boton
+**"Usuarios"** de la ventana. Las dos usan `crear_cuenta()`, que revisa las reglas en este
+orden y retorna el primer motivo que encuentra:
+
+| Regla | Mensaje si no se cumple |
+|---|---|
+| Usuario no vacio y sin el caracter `\|` | `Usuario invalido` |
+| Contrasena igual a la confirmacion | `Las contrasenas no coinciden` |
+| Contrasena de al menos `LONGITUD_MINIMA` (6) caracteres | `La contrasena debe tener al menos 6 caracteres` |
+| Rol de `ROLES` (`administrador` o `usuario`) | `Rol invalido` |
+| Usuario no registrado (sin distinguir mayusculas) | `El usuario ya existe` |
+
+Si todo esta bien, la cuenta se guarda con `agregar_usuario()` (sal aleatoria y hash SHA-256,
+nunca la contrasena) y el mensaje es `Cuenta creada`. Si no se puede escribir, el mensaje es
+`No se pudo crear la cuenta`.
 
 Usuarios de prueba (el nombre no distingue mayusculas, la contrasena si):
 
@@ -232,7 +251,8 @@ python main.py
 
 Al iniciar se pide usuario y contrasena (la contrasena no se muestra al escribir).
 Hay **3 intentos**: al tercer error el programa muestra "Acceso bloqueado" y termina.
-El rol `administrador` puede usar todas las opciones; el rol `usuario` no puede eliminar.
+El rol `administrador` puede usar todas las opciones; el rol `usuario` no puede eliminar
+ni crear usuarios.
 
 Menu principal:
 
@@ -245,8 +265,12 @@ Menu principal:
 7. Listar expedientes en tabla
 8. Cambiar estado de un expediente (Recibido, En proceso o Atendido; agrega la entrada al historial)
 9. Salir (guarda en el almacenamiento configurado: `expedientes.txt` o `mesa_partes.db`)
+10. Crear usuario (solo administrador): pide el usuario, la contrasena y su confirmacion
+    (ocultas) y el rol en un menu numerado; muestra el mensaje de `crear_cuenta()`
 
-Las opciones 2 a 8 avisan "No hay expedientes registrados." si la lista esta vacia.
+Las opciones 2 a 8 avisan "No hay expedientes registrados." si la lista esta vacia; la
+opcion 10 funciona aunque no haya expedientes. Con el rol `usuario`, la opcion 10 avisa
+"Solo el administrador puede crear usuarios."
 
 Los listados se muestran como tabla alineada a partir de un **arreglo bidimensional**
 (lista de listas): la fila 0 son los encabezados y cada fila siguiente es un expediente.
@@ -265,9 +289,14 @@ python gui.py
   Usa `verificar_login()` de `autenticacion.py`. Hay **3 intentos**: se muestran los intentos
   restantes y al tercer error aparece "Acceso bloqueado" y la ventana se cierra.
 - **Ventana principal:** arriba `Usuario: <usuario> (<rol>)`; a la izquierda los botones
-  Registrar, Listar / Buscar, Ver expediente y Salir; a la derecha el marco `area_contenido`,
-  donde se dibuja cada vista. Al abrir carga los expedientes con `cargar_desde_archivo()` y al salir (boton
-  Salir o la X de la ventana) guarda con `guardar_en_archivo()`.
+  Registrar, Listar / Buscar, Ver expediente, Usuarios (solo `administrador`) y Salir; a la
+  derecha el marco `area_contenido`, donde se dibuja cada vista. Al abrir carga los expedientes
+  con `cargar_desde_archivo()` y al salir (boton Salir o la X de la ventana) guarda con
+  `guardar_en_archivo()`.
+- **Usuarios:** solo aparece para el rol `administrador`. Formulario con Usuario, Contrasena y
+  Confirmar contrasena (ocultas con `*`), una lista de solo lectura con los roles y el boton
+  "Crear cuenta", que usa `crear_cuenta()` (ver "Crear usuarios"). Si la cuenta se crea, avisa
+  y limpia el formulario; si no, muestra el motivo.
 - **Registrar:** formulario con Nombre, DNI, Asunto y una lista de solo lectura con las
   dependencias. Usa `preparar_datos()` y `crear_registro()` de `registro.py`, las mismas
   funciones que la consola.
@@ -360,6 +389,7 @@ python -m unittest discover -s tests -v
 | `tests/test_expediente.py`    | `crear_expediente` (valores por defecto e historial), ida y vuelta entre `historial_a_texto` y `texto_a_historial`, `agregar_entrada` (orden cronologico, conserva lo anterior y valida), y `generar_codigo` (mayor + 1, cuatro digitos, ignora codigos fuera de formato) |
 | `tests/test_persistencia.py`  | Modo `"txt"`: guardar y cargar con historial, formato viejo de 5 campos, lineas vacias o mal formadas, archivo inexistente, bytes invalidos, error al guardar, guardado atomico (sin `.tmp` y original intacto si falla) y copia sin duplicados a `expedientes_rechazados.txt` |
 | `tests/test_autenticacion_bom.py` | Login con un `usuarios.txt` que empieza con BOM |
+| `tests/test_crear_cuenta.py`  | Cada regla de `crear_cuenta()` y su orden, login con la cuenta creada y su rol, sal y hash sin la contrasena, y el boton "Usuarios" (solo administrador) con su formulario |
 | `tests/test_persistencia_db.py` | SQLite: creacion de tablas, guardar y cargar con historial en orden, nombres con apostrofe (`O'Brien`), borrado del historial, base inexistente, `migrar_txt_a_db` y migracion automatica en modo `"sqlite"` |
 | `tests/test_integridad.py`    | Rutina de integridad: fechas reales y formatos invalidos, DNI de 8 digitos, nombre y asunto vacios, estado y dependencia fuera del catalogo, historial invalido, codigo repetido, resumen de rechazos y carga real de un archivo con lineas corruptas |
 | `tests/test_gui_tabla.py`     | Tabla de expedientes: filas y avisos de `preparar_filas()`, busqueda, "Ver todos", orden, eliminacion segun el rol y con confirmacion, codigos repetidos, doble clic y apertura del detalle |
