@@ -103,13 +103,13 @@ def registrar_expediente(expedientes, usuario):
                                       dependencia, usuario)
     print("Expediente registrado con codigo " + codigo)
     if not guardado:
-        print("No se pudo guardar en expedientes.txt. Revise el archivo.")
+        print("No se pudieron guardar los datos.")
 
 
 def modificar_expediente(expedientes):
     """Busca por codigo con buscar_posicion(). Si no existe, avisa.
     Si existe, pide datos nuevos, valida en bucle y llama a aplicar_modificacion()."""
-    codigo = input("Codigo a modificar: ").strip()
+    codigo = input("Codigo a modificar: ").strip().upper()
     if buscar_posicion(expedientes, codigo) is None:
         print("Expediente no encontrado.")
         return
@@ -126,14 +126,14 @@ def modificar_expediente(expedientes):
     if modifico:
         print("Expediente modificado.")
         if not guardado:
-            print("No se pudo guardar en expedientes.txt. Revise el archivo.")
+            print("No se pudieron guardar los datos.")
     else:
         print("Expediente no encontrado.")
 
 
 def cambiar_estado_expediente(expedientes, usuario):
     """Pide el codigo y el nuevo estado, y aplica el cambio con cambiar_estado()."""
-    codigo = input("Codigo del expediente: ").strip()
+    codigo = input("Codigo del expediente: ").strip().upper()
     posicion = buscar_posicion(expedientes, codigo)
     if posicion is None:
         print("Expediente no encontrado.")
@@ -157,4 +157,4 @@ def cambiar_estado_expediente(expedientes, usuario):
     else:
         print("Estado cambiado a " + nuevo_estado + ".")
         if not guardado:
-            print("No se pudo guardar en expedientes.txt. Revise el archivo.")
+            print("No se pudieron guardar los datos.")
