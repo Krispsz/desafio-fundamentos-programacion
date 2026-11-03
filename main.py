@@ -7,7 +7,7 @@ import getpass
 import os
 
 import integridad
-from autenticacion import verificar_login
+from autenticacion import ROLES, crear_cuenta, verificar_login
 from persistencia import cargar_con_informe, guardar_en_archivo
 from registro import (registrar_expediente, modificar_expediente,
                       cambiar_estado_expediente)
@@ -49,6 +49,27 @@ def mostrar_menu():
     print("7. Listar expedientes")
     print("8. Cambiar estado de un expediente")
     print("9. Salir")
+    print("10. Crear usuario (solo administrador)")
+
+def elegir_rol():
+    """Muestra los roles numerados y repite hasta que la opcion sea valida."""
+    while True:
+        print("Roles:")
+        for i in range(len(ROLES)):
+            print("  " + str(i + 1) + ". " + ROLES[i])
+        opcion = input("Rol (1-" + str(len(ROLES)) + "): ").strip()
+        if opcion.isdigit() and 1 <= int(opcion) <= len(ROLES):
+            return ROLES[int(opcion) - 1]
+        print("Opcion invalida, intente de nuevo.")
+
+def crear_usuario_consola():
+    """Pide los datos de la cuenta y muestra el mensaje que retorna crear_cuenta()."""
+    usuario = input("Usuario nuevo: ").strip()
+    clave = getpass.getpass("Contrasena: ")
+    confirmacion = getpass.getpass("Confirmar contrasena: ")
+    rol = elegir_rol()
+    creada, mensaje = crear_cuenta(usuario, clave, confirmacion, rol)
+    print(mensaje)
 
 def main():
     """Inicia sesion, carga los expedientes, ejecuta el menu y guarda al salir."""
@@ -67,6 +88,10 @@ def main():
         opcion = input("Elige una opcion: ").strip()
         if opcion == "1":
             registrar_expediente(expedientes, usuario)
+        elif opcion == "10" and rol != "administrador":
+            print("Solo el administrador puede crear usuarios.")
+        elif opcion == "10":
+            crear_usuario_consola()
         elif opcion in ("2", "3", "4", "5", "6", "7", "8") and len(expedientes) == 0:
             print("No hay expedientes registrados.")
         elif opcion == "2":
