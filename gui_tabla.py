@@ -91,7 +91,12 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
         for item in tabla.get_children():
             tabla.delete(item)
         for fila in filas:
-            tabla.insert("", tk.END, iid=fila[0], values=fila)
+            # Un codigo repetido (la integridad lo conserva) no puede ser iid
+            # dos veces: la segunda fila recibe el iid que genere Tkinter.
+            if tabla.exists(fila[0]):
+                tabla.insert("", tk.END, values=fila)
+            else:
+                tabla.insert("", tk.END, iid=fila[0], values=fila)
         avisar(aviso if aviso is not None else "")
 
     def buscar(evento=None):
@@ -117,7 +122,7 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
         if len(seleccion) == 0:
             avisar("Seleccione un expediente para eliminar")
             return
-        codigo = seleccion[0]
+        codigo = tabla.set(seleccion[0], "codigo")
         eliminado, guardado = eliminar_por_codigo(expedientes, codigo)
         refrescar()
         if not eliminado:
@@ -131,7 +136,8 @@ def mostrar_tabla(contenedor, expedientes, usuario, rol):
         """Abre el detalle del expediente de la fila elegida."""
         seleccion = tabla.selection()
         if len(seleccion) > 0:
-            abrir_detalle(contenedor, expedientes, seleccion[0], usuario, rol)
+            abrir_detalle(contenedor, expedientes, tabla.set(seleccion[0], "codigo"),
+                          usuario, rol)
 
     ttk.Button(barra_busqueda, text="Buscar", command=buscar).pack(side="left",
                                                                    padx=(8, 0))
