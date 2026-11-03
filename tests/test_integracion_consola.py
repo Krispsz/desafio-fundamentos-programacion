@@ -118,6 +118,19 @@ class PruebasIntegracionConsola(unittest.TestCase):
         self.assertIn("Datos invalidos, intente de nuevo.", salida)
         self.assertIn("Expediente registrado con codigo EXP-0001", salida)
 
+    def test_lee_el_formato_viejo_de_5_campos_con_valores_por_defecto(self):
+        # Un archivo de antes tiene 5 campos; al cargar se completan estado,
+        # dependencia e historial, y al salir se guarda ya con 8 campos.
+        self.escribir("EXP-0001|Juan Perez|12345678|Solicitud de licencia|2026-10-16\n")
+        salida = self.correr(["admin", "admin123", "7", "9"])
+        fila = [linea for linea in salida.splitlines() if "EXP-0001" in linea][0]
+        self.assertIn("Recibido", fila)
+        self.assertIn("Mesa de Partes", fila)
+        campos = self.leer().strip().split("|")
+        self.assertEqual(len(campos), 8)
+        self.assertEqual(campos[5:7], ["Recibido", "Mesa de Partes"])
+        self.assertEqual(campos[7], "2026-10-16,Recibido,sistema")
+
     def test_los_datos_sobreviven_entre_ejecuciones(self):
         self.correr(["admin", "admin123", "1", "Ana Diaz", "11223344",
                      "Licencia de obra", "4", "9"])
