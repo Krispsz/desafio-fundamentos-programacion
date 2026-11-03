@@ -6,6 +6,7 @@ Cada prueba trabaja en una carpeta temporal: nunca se toca el expedientes.txt re
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import persistencia
 from expediente import crear_expediente
@@ -71,6 +72,27 @@ class PruebasPersistenciaTexto(unittest.TestCase):
         expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
                                         "2026-10-16")]
         self.assertFalse(persistencia.guardar_en_archivo(expedientes, ruta))
+
+    def test_guardado_correcto_no_deja_archivo_temporal(self):
+        expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
+                                        "2026-10-16")]
+        self.assertTrue(persistencia.guardar_en_archivo(expedientes, self.ruta))
+        self.assertTrue(os.path.exists(self.ruta))
+        self.assertFalse(os.path.exists(self.ruta + ".tmp"))
+        self.assertEqual(os.listdir(self.carpeta.name), ["expedientes.txt"])
+
+    def test_guardado_fallido_conserva_el_archivo_original(self):
+        self.escribir(b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n")
+        expedientes = [crear_expediente("EXP-0001", "Juan Perez", "12345678", "Tramite",
+                                        "2026-10-16"),
+                       crear_expediente("EXP-0002", "Maria Lopez", "87654321", "Reclamo",
+                                        "2026-10-17")]
+        with mock.patch("persistencia.historial_a_texto", side_effect=OSError):
+            self.assertFalse(persistencia.guardar_en_archivo(expedientes, self.ruta))
+        with open(self.ruta, "rb") as archivo:
+            self.assertEqual(archivo.read(),
+                             b"EXP-0001|Juan Perez|12345678|Tramite|2026-10-16\n")
+        self.assertFalse(os.path.exists(self.ruta + ".tmp"))
 
 
 if __name__ == "__main__":

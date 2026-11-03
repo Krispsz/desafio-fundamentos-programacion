@@ -81,10 +81,14 @@ def cargar_txt_con_informe(ruta=RUTA_ARCHIVO):
 def guardar_en_txt(expedientes, ruta=RUTA_ARCHIVO):
     """Sobrescribe el archivo de texto con todos los expedientes (8 campos por linea).
 
+    El guardado es atomico: se escribe primero en ruta + ".tmp" y al terminar
+    os.replace() lo pone en lugar del original. Si el programa se corta o hay
+    un error a mitad, el archivo original queda intacto.
     Retorna True si se guardo y False si hubo un error de escritura.
     """
+    temporal = ruta + ".tmp"
     try:
-        with open(ruta, "w", encoding="utf-8") as archivo:
+        with open(temporal, "w", encoding="utf-8") as archivo:
             for expediente in expedientes:
                 campos = [
                     expediente["codigo"],
@@ -97,9 +101,20 @@ def guardar_en_txt(expedientes, ruta=RUTA_ARCHIVO):
                     historial_a_texto(expediente["historial"]),
                 ]
                 archivo.write(SEPARADOR.join(campos) + "\n")
+        os.replace(temporal, ruta)
     except OSError:
+        borrar_temporal(temporal)
         return False
     return True
+
+
+def borrar_temporal(temporal):
+    """Borra el archivo temporal de un guardado fallido, si quedo."""
+    try:
+        if os.path.exists(temporal):
+            os.remove(temporal)
+    except OSError:
+        pass
 
 
 def cargar_desde_archivo(ruta=RUTA_ARCHIVO):
