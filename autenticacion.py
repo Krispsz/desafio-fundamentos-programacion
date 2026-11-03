@@ -3,9 +3,20 @@
 import hashlib
 import secrets
 
+from expediente import SEPARADOR_ENTRADA, SEPARADOR_HISTORIAL
+
 RUTA_USUARIOS = "usuarios.txt"
 
 SEPARADOR = "|"
+
+# El nombre de usuario se guarda en usuarios.txt (campos con |) y en el
+# historial de cada expediente (fecha,estado,usuario con entradas separadas
+# por ;): ninguno de esos separadores puede ir dentro del nombre.
+SEPARADORES_PROHIBIDOS = [SEPARADOR, SEPARADOR_ENTRADA, SEPARADOR_HISTORIAL]
+
+ROLES = ["administrador", "usuario"]
+
+LONGITUD_MINIMA = 6
 
 
 def hash_contrasena(contrasena, sal):
@@ -67,6 +78,9 @@ def agregar_usuario(usuario, contrasena, rol, ruta=RUTA_USUARIOS):
         return False
     if SEPARADOR in usuario or SEPARADOR in contrasena or SEPARADOR in rol:
         return False
+    for separador in SEPARADORES_PROHIBIDOS:
+        if separador in usuario:
+            return False
     if usuario_existe(usuario, ruta):
         return False
     sal = secrets.token_hex(8)
@@ -74,3 +88,46 @@ def agregar_usuario(usuario, contrasena, rol, ruta=RUTA_USUARIOS):
         archivo.write(usuario + SEPARADOR + sal + SEPARADOR
                       + hash_contrasena(contrasena, sal) + SEPARADOR + rol + "\n")
     return True
+
+
+def usuario_valido(usuario):
+    """True si el nombre (sin espacios en los extremos) no esta vacio y no tiene
+    espacios ni ninguno de los SEPARADORES_PROHIBIDOS (| , ;)."""
+    nombre = usuario.strip()
+    if nombre == "" or " " in nombre:
+        return False
+    for separador in SEPARADORES_PROHIBIDOS:
+        if separador in nombre:
+            return False
+    return True
+
+
+def crear_cuenta(usuario, clave, confirmacion, rol, ruta=RUTA_USUARIOS):
+    """Valida y crea una cuenta. Retorna (creada, mensaje).
+
+    Las reglas se revisan en este orden: usuario valido, clave igual a la
+    confirmacion, clave de al menos LONGITUD_MINIMA caracteres, rol de ROLES y
+    usuario no registrado. Si todo esta bien, la guarda con agregar_usuario()
+    (sal aleatoria y hash, nunca la contrasena).
+
+    El usuario es valido si, despues de strip(), no esta vacio y no tiene
+    espacios, |, , ni ;. El | separa los campos de usuarios.txt, y el nombre
+    tambien se guarda en el historial de los expedientes como
+    fecha,estado,usuario con las entradas separadas por ;: un nombre como
+    "ana,maria" rompia esa entrada y el historial se recargaba vacio. Los
+    espacios se rechazan para que el nombre se escriba siempre igual al entrar.
+    """
+    if not usuario_valido(usuario):
+        return False, "Usuario invalido"
+    if clave != confirmacion:
+        return False, "Las contrasenas no coinciden"
+    if len(clave) < LONGITUD_MINIMA:
+        return False, ("La contrasena debe tener al menos " + str(LONGITUD_MINIMA)
+                       + " caracteres")
+    if rol not in ROLES:
+        return False, "Rol invalido"
+    if usuario_existe(usuario, ruta):
+        return False, "El usuario ya existe"
+    if agregar_usuario(usuario, clave, rol, ruta):
+        return True, "Cuenta creada"
+    return False, "No se pudo crear la cuenta"
