@@ -4,6 +4,7 @@ Convencion: este archivo es la capa de consola (aqui van los input y print);
 los modulos de logica solo reciben parametros y retornan valores."""
 
 import getpass
+import os
 
 import integridad
 from autenticacion import verificar_login
@@ -94,4 +95,7 @@ def main():
         print("No se pudieron guardar los datos.")
 
 if __name__ == "__main__":
+    # Las rutas de los datos son relativas: se trabaja en la carpeta del
+    # programa para encontrar usuarios.txt aunque se ejecute desde otra.
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main()
