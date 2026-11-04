@@ -6,6 +6,12 @@ del curso **Fundamentos de Programacion (CIIN1205P)**.
 El sistema permite registrar expedientes (documentos que ingresan a una entidad),
 validarlos, almacenarlos en un archivo de texto plano y consultarlos posteriormente.
 
+## Manual de usuario
+
+El uso del programa paso a paso (consola y ventana, cuentas y roles, mensajes frecuentes y
+donde se guardan los datos), con capturas, esta en
+[docs/manual_usuario.md](docs/manual_usuario.md).
+
 ## Estructura del proyecto
 
 | Archivo            | Responsabilidad                                                     |
