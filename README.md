@@ -445,6 +445,6 @@ Reglas de validacion (se repite la captura hasta que se cumplan):
 | Integrante | Usuario en Git | Tareas y modulos principales |
 |------------|----------------|------------------------------|
 | Fabrizio   | `Angel`        | `expediente.py` (06), `persistencia.py` y `persistencia_db.py` (02, 19, 22), `main.py` (03, 18a), `gui.py` (12), creacion de cuentas (23), pruebas en `tests/` (14), manual de usuario (17) |
-| Cristobal  | `Crizzz3`      | `autenticacion.py` (20), `registro.py` (04, 09), `procesamiento.py` (05), `integridad.py` (21), `gui_tabla.py` (13), historial (07), pruebas de integracion de la consola (15-16) |
+| Cristobal  | `Crizzz3`      | `validaciones.py`, `autenticacion.py` (20), `registro.py` (04, 09), `procesamiento.py` (05), `integridad.py` (21), `gui_tabla.py` (13), historial (07), pruebas de integracion de la consola (15-16) |
 
 > Nota: los commits de Fabrizio aparecen con el nombre de usuario `Angel`.
