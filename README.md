@@ -21,11 +21,14 @@ donde se guardan los datos), con capturas, esta en
 | `persistencia_db.py` | Lectura y escritura en la base SQLite `mesa_partes.db`           |
 | `integridad.py`    | Revision de los datos leidos del archivo (avisa sin descartar)        |
 | `validaciones.py`  | Normalizacion y validacion de los datos ingresados por el usuario    |
-| `registro.py`      | Registro y modificacion de expedientes (con validacion en bucle)     |
+| `registro.py`      | Registro, modificacion y cambio de estado de expedientes (con validacion en bucle) |
 | `procesamiento.py` | Busquedas (codigo y texto), tabla, ordenamiento burbuja, eliminacion |
-| `autenticacion.py` | Login con usuarios.txt: hash SHA-256, retorna True/False y el rol    |
+| `autenticacion.py` | Login con usuarios.txt (SHA-256 con sal, retorna True/False y el rol) y creacion de cuentas |
 | `main.py`          | Menu principal e integracion de todos los modulos                    |
-| `gui.py`           | Interfaz grafica (tkinter): login, ventana principal, registro, detalle y modificacion |
+| `gui.py`           | Interfaz grafica (tkinter): login, ventana principal, registro, detalle con historial y cambio de estado, modificacion y usuarios |
+| `gui_tabla.py`     | Tabla de expedientes en la ventana: busqueda, "Ver todos", orden y eliminacion con confirmacion |
+| `tests/`           | 138 pruebas unittest (unidad, integracion de la consola y ventana)   |
+| `docs/`            | Manual de usuario y sus capturas                                     |
 
 ## Convencion de codigo
 
@@ -110,7 +113,9 @@ Expedientes cargados: 6
 ```
 
 El aviso es informativo: el expediente sigue en la lista y se puede corregir
-con la opcion Modificar o con la ventana. Las lineas que no se pueden
+desde el programa si el error esta en el nombre, el DNI o el asunto (Modificar) o en
+el estado (Cambiar estado). La fecha, la dependencia o un codigo repetido se corrigen
+en `expedientes.txt` con el programa cerrado. Las lineas que no se pueden
 convertir en expediente (otro numero de campos) no entran en la lista, pero se
 copian a `expedientes_rechazados.txt` para no perderlas (ver "Robustez de los datos").
 
@@ -432,14 +437,14 @@ Reglas de validacion (se repite la captura hasta que se cumplan):
 - **Codigos repetidos en la tabla de la GUI.** Un codigo repetido es un dato invalido que la
   integridad conserva y avisa al cargar. Con codigos repetidos, "Eliminar" y el doble clic
   actuan sobre el **primer** expediente con ese codigo (`buscar_posicion()`), no
-  necesariamente sobre la fila seleccionada. Se recomienda corregir el codigo repetido con
-  Modificar antes de eliminar.
+  necesariamente sobre la fila seleccionada. Modificar no cambia el codigo: para corregir un
+  codigo repetido hay que editar `expedientes.txt` con el programa cerrado.
 
 ## Equipo
 
-| Integrante | Usuario en Git | Modulos                                         |
-|------------|----------------|-------------------------------------------------|
-| Fabrizio   | `Angel`        | `expediente.py`, `persistencia.py`, `main.py`    |
-| Cristobal  | `Crizzz3`      | `validaciones.py`, `registro.py`, `procesamiento.py`, `autenticacion.py` |
+| Integrante | Usuario en Git | Tareas y modulos principales |
+|------------|----------------|------------------------------|
+| Fabrizio   | `Angel`        | `expediente.py` (06), `persistencia.py` y `persistencia_db.py` (02, 19, 22), `main.py` (03, 18a), `gui.py` (12), creacion de cuentas (23), pruebas en `tests/` (14), manual de usuario (17) |
+| Cristobal  | `Crizzz3`      | `autenticacion.py` (20), `registro.py` (04, 09), `procesamiento.py` (05), `integridad.py` (21), `gui_tabla.py` (13), historial (07), pruebas de integracion de la consola (15-16) |
 
 > Nota: los commits de Fabrizio aparecen con el nombre de usuario `Angel`.
